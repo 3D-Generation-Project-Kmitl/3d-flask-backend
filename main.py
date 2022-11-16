@@ -55,7 +55,7 @@ class Generate3DModel(Resource):
         replaceWordInTransformsJson(transforms_file_path)
 
         run_instant_ngp_file_path=instant_ngp_scripts_folder_path+'run.py'
-        output_mesh_file_path=folder_path+'phol1.obj'
+        output_mesh_file_path=folder_path+'phol2.obj'
         do_system(f'python {run_instant_ngp_file_path} --training_data {folder_path} --mode nerf --save_mesh {output_mesh_file_path}')
       
         return 'A 3D Model has been generated.'
