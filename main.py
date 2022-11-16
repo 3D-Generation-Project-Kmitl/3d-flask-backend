@@ -23,7 +23,7 @@ def do_system(arg):
 		sys.exit(err)
 class Generate3DModel(Resource):
     def post(self):
-        base_folder_path='./'
+        base_folder_path='../../3D_Model_Project'
         f = request.files['file']
         folder_path='./data/phol1/'
         if not os.path.exists(folder_path):
