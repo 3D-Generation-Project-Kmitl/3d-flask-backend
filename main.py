@@ -23,7 +23,7 @@ def do_system(arg):
 		sys.exit(err)
 class Generate3DModel(Resource):
     def post(self):
-        base_folder_path='../../3D_Model_Project/'
+        base_folder_path='./'
         f = request.files['file']
         folder_path='./data/phol1/'
         if not os.path.exists(folder_path):
@@ -52,12 +52,11 @@ class Generate3DModel(Resource):
         rembg_images_folder_path=folder_path+'images_png'
         do_system(f'rembg p {colmap_images_folder_path} {rembg_images_folder_path}')
 
-
-
         replaceWordInTransformsJson(transforms_file_path)
 
         run_instant_ngp_file_path=instant_ngp_scripts_folder_path+'run.py'
-        do_system(f'python {run_instant_ngp_file_path} --training_data {folder_path} --mode nerf --save_mesh /home/jupyter-orachat/3D_Model_Project/instant-ngp/data/phol/cup/cup_1.obj')
+        output_mesh_file_path=folder_path+'phol1.obj'
+        do_system(f'python {run_instant_ngp_file_path} --training_data {folder_path} --mode nerf --save_mesh {output_mesh_file_path}')
       
         return 'A 3D Model has been generated.'
 
