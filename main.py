@@ -20,7 +20,7 @@ def do_system(arg):
 	err = os.system(arg)
 	if err:
 		print("FATAL: command failed")
-		sys.exit(err)
+		# sys.exit(err)
 class Generate3DModel(Resource):
     def post(self):
         base_folder_path='../../3D_Model_Project/'
@@ -61,6 +61,7 @@ class Generate3DModel(Resource):
             do_system(f'python {run_instant_ngp_file_path} --training_data {folder_path} --mode nerf --save_mesh {output_mesh_file_path}')
             do_system(f'rm ./data/video/images -r')
         except:
+            do_system(f'rm ./data/video/images -r')
             print("An exception occurred")
       
         return 'A 3D Model has been generated.'
