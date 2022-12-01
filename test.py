@@ -1,5 +1,6 @@
 import argparse
 import os,sys
+import re
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-vi", default="", help="video input")
@@ -30,7 +31,7 @@ def testGen3DModel():
     if args.m=='full':
         base_folder_path='../../3D_Model_Project/'
 
-        aabb_scale=4
+        aabb_scale=1
         video_fps_list=[15,30,60]
         colmap_camera_model_list=["PINHOLE","RADIAL","OPENCV"]
 
