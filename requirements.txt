@@ -3,3 +3,4 @@ Flask-RESTful==0.3.9
 Werkzeug==2.2.2
 wheel
 rembg[gpu]
+commentjson
