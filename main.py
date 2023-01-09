@@ -21,8 +21,8 @@ def replaceWordInTransformsJson(transforms_file_path):
         file.write(data)
 def getFPSForCOLMAP(video_path):
     fps=128.0/getVideoDurationInSeconds(video_path);
-    if fps<1:
-        fps=1
+    if fps<2:
+        fps=2
     return int(fps)
 def getVideoDurationInSeconds(video_path):
     data = cv2.VideoCapture(video_path)
