@@ -335,7 +335,7 @@ if __name__ == "__main__":
 			summary_loss_metrics={'psnr_avgmse': [psnr_avgmse], 'ssim_avg': [ssim],'psnr_avg':[psnr],'min_psnr':[minpsnr],'max_psnr':[maxpsnr]}
 			df_summary_loss_metrics=pd.DataFrame(data=summary_loss_metrics)
 			df_summary_loss_metrics.to_csv(f'{args.result_path}summary_loss_metrics.csv')
-			print(f"PSNR={psnr} [min={minpsnr} max={maxpsnr}] SSIM={ssim}")
+		print(f"PSNR={psnr} [min={minpsnr} max={maxpsnr}] SSIM={ssim}")
 
 	if args.save_mesh:
 		res = args.marching_cubes_res or 256
