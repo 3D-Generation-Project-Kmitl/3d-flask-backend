@@ -1,4 +1,4 @@
-from flask import Flask, request,make_response,send_from_directory
+from flask import Flask, request,make_response
 
 from werkzeug.utils import secure_filename
 import os,sys
@@ -7,6 +7,13 @@ import cv2
 import datetime
 from flask_cors import CORS
 import aspose.threed as a3d
+
+from prisma import Prisma, register
+from prisma.models import Model
+
+db = Prisma()
+db.connect()
+register(db)
 
 app=Flask(__name__,static_folder="./data")
 cors = CORS(app)
@@ -44,10 +51,6 @@ def do_system(arg):
 def get():
     return 'Hello From Generate3DModel API'
 
-# @app.route('/data/<folder>/<filename>.obj',methods = ['GET'])
-# def get3DModelFile(folder,filename):
-#     print(f'/data/{folder}/{filename}.obj')
-#     return send_from_directory(f'./data/{folder}', f'{filename}.obj')
 
 @app.route('/gen3DModel',methods = ['POST'])
 def post():
@@ -90,8 +93,10 @@ def post():
             output_mesh_file_path=folder_path+f'{task_name}.ply'
             model_snapshot_path=base_folder_path+'model_snapshot/saved_model.msgpack'
             do_system(f'{envs_path}python3 {run_instant_ngp_file_path} --training_data {folder_path} --mode nerf --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path}')
+            
             scene = a3d.Scene.from_file(output_mesh_file_path)
             output_mesh_file_path_glb=folder_path+f'{task_name}.glb'
+            
             scene.save(output_mesh_file_path_glb)
             do_system(f'rm ./data/video/images -r')
             try:

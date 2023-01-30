@@ -44,11 +44,6 @@ def do_system(arg):
 def get():
     return 'Hello From Generate3DModel API'
 
-# @app.route('/data/<folder>/<filename>.obj',methods = ['GET'])
-# def get3DModelFile(folder,filename):
-#     print(f'/data/{folder}/{filename}.obj')
-#     return send_from_directory(f'./data/{folder}', f'{filename}.obj')
-
 @app.route('/gen3DModel',methods = ['POST'])
 def post():
     base_folder_path='./'

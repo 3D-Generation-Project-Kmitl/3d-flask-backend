@@ -1,0 +1,247 @@
+generator client {
+  provider = "prisma-client-flask"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = ไม่บอกหรอก อิอิ
+}
+
+model User {
+  userId            Int                @id @default(autoincrement())
+  email             String             @unique @db.VarChar(100)
+  name              String             @db.VarChar(50)
+  password          String             @db.VarChar(200)
+  gAuthCode         String?            @db.VarChar(200)
+  picture           String?            @db.VarChar(100)
+  gender            String?            @db.VarChar(10)
+  dateOfBirth       DateTime?          @db.Date
+  isVerified        Boolean            @default(false)
+  role              Role               @default(USER)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  OauthRefreshToken OauthRefreshToken?
+  Identity          Identity?
+  Product           Product[]
+  Favorite          Favorite[]
+  Cart              Cart[]
+  Order             Order[]
+  Wallet            Wallet?
+  Notification      Notification[]
+  ReportProduct     ReportProduct[]
+  Model             Model[]
+  Otp               Otp[]
+}
+
+model OauthRefreshToken {
+  userId       Int       @id
+  refreshToken String?   @unique
+  expired_at   DateTime?
+  User         User      @relation(fields: [userId], references: [userId])
+}
+
+model Identity {
+  userId          Int            @id
+  firstName       String         @db.VarChar(50)
+  lastName        String         @db.VarChar(50)
+  phone           String         @db.VarChar(20)
+  idCardNumber    String         @db.VarChar(20)
+  cardPicture     String         @db.VarChar(100)
+  cardFacePicture String         @db.VarChar(100)
+  status          IdentityStatus @default(PENDING)
+  issue           String?        @db.VarChar(100)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  User            User           @relation(fields: [userId], references: [userId])
+}
+
+model Category {
+  categoryId Int       @id @default(autoincrement())
+  name       String    @unique @db.VarChar(50)
+  picture    String    @db.VarChar(100)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  Product    Product[]
+}
+
+model Product {
+  productId     Int             @id @default(autoincrement())
+  userId        Int
+  modelId       Int             @unique
+  categoryId    Int
+  name          String          @db.VarChar(50)
+  details       String?         @db.VarChar(500)
+  views         Int             @default(0)
+  price         Float
+  status        ProductStatus   @default(AVAILABLE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  User          User            @relation(fields: [userId], references: [userId])
+  Category      Category        @relation(fields: [categoryId], references: [categoryId])
+  Model         Model           @relation(fields: [modelId], references: [modelId])
+  Favorite      Favorite[]
+  Cart          Cart[]
+  OrderProduct  OrderProduct[]
+  ReportProduct ReportProduct[]
+}
+
+model Favorite {
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [userId])
+  Product   Product  @relation(fields: [productId], references: [productId])
+
+  @@id([userId, productId])
+}
+
+model Cart {
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [userId])
+  Product   Product  @relation(fields: [productId], references: [productId])
+
+  @@id([userId, productId])
+}
+
+model Order {
+  orderId          Int                @id @default(autoincrement())
+  userId           Int
+  totalPrice       Int
+  orderDateTime    DateTime
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  User             User               @relation(fields: [userId], references: [userId])
+  OrderProduct     OrderProduct[]
+  OrderTransaction OrderTransaction[]
+}
+
+model OrderProduct {
+  orderId   Int
+  productId Int
+  price     Int
+  comment   String?  @db.VarChar(500)
+  score     Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Order     Order    @relation(fields: [orderId], references: [orderId])
+  Product   Product  @relation(fields: [productId], references: [productId])
+
+  @@id([orderId, productId])
+}
+
+model Wallet {
+  userId            Int                 @id
+  balance           Float
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  User              User                @relation(fields: [userId], references: [userId])
+  WalletTransaction WalletTransaction[]
+  OrderTransaction  OrderTransaction[]
+}
+
+model WalletTransaction {
+  walletTransactionId Int                   @id @default(autoincrement())
+  userId              Int
+  amountMoney         Float
+  type                WalletTransactionType
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  Wallet              Wallet                @relation(fields: [userId], references: [userId])
+}
+
+model OrderTransaction {
+  orderId     Int
+  userId      Int
+  amountMoney Float
+  isBuy       Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Order       Order    @relation(fields: [orderId], references: [orderId])
+  Wallet      Wallet   @relation(fields: [userId], references: [userId])
+
+  @@id([orderId, userId])
+}
+
+model Notification {
+  notificationId Int      @id @default(autoincrement())
+  userId         Int
+  picture        String   @db.VarChar(100)
+  title          String   @db.VarChar(100)
+  description    String   @db.VarChar(500)
+  link           String   @db.VarChar(100)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  User           User     @relation(fields: [userId], references: [userId])
+}
+
+model ReportProduct {
+  userId    Int
+  productId Int
+  detail    String   @db.VarChar(500)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [userId])
+  Product   Product  @relation(fields: [productId], references: [productId])
+
+  @@id([userId, productId])
+}
+
+model Model {
+  modelId   Int         @id @default(autoincrement())
+  userId    Int
+  model     String?
+  picture   String?
+  status    ModelStatus @default(AVAILABLE)
+  type      ModelType
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  User      User        @relation(fields: [userId], references: [userId])
+  Product   Product?
+}
+
+model Otp {
+  userId     Int       @id
+  otp        String?   @db.VarChar(6)
+  expired_at DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  User       User      @relation(fields: [userId], references: [userId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ProductStatus {
+  AVAILABLE
+  UNAVAILABLE
+  VIOLATION
+  DELETED
+}
+
+enum WalletTransactionType {
+  DEPOSIT
+  WITHDRAW
+}
+
+enum IdentityStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ModelType {
+  ADD
+  CREATE
+  BUY
+}
+
+enum ModelStatus {
+  AVAILABLE
+  DELETED
+}
