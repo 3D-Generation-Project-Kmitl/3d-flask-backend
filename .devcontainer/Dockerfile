@@ -1,8 +1,22 @@
+# FROM mcr.microsoft.com/devcontainers/anaconda:0-3
+
+# Copy environment.yml (if found) to a temp location so we update the environment. Also
+# copy "noop.txt" so the COPY instruction does not fail if no environment.yml exists.
+# COPY environment.yml* .devcontainer/noop.txt /tmp/conda-tmp/
+
+# RUN python3 -m pip install -U pyOpenSSL cryptography \
+#  && if [ -f "/tmp/conda-tmpython3 -m pip install -U pyOpenSSL cryptographyp/environment.yml" ]; then umask 0002 && /opt/conda/bin/conda env update -n base -f /tmp/conda-tmp/environment.yml; fi \
+#     && rm -rf /tmp/conda-tmp
+
+# [Optional] Uncomment this section to install additional OS packages.
+# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+#     && apt-get -y install --no-install-recommends <your-package-list-here>
+
 FROM nvidia/cuda:10.2-devel-ubuntu18.04
 
 ENV COLMAP_VERSION=3.7
 ENV CMAKE_VERSION=3.21.0
-ENV PYTHON_VERSION=3.7.0
+ENV PYTHON_VERSION=3.8.0
 ENV OPENCV_VERSION=4.5.5.62
 ENV CERES_SOLVER_VERSION=2.0.0
 
@@ -90,3 +104,4 @@ RUN echo "Installing COLMAP ver. ${COLMAP_VERSION}..." \
 	&& make -j3 \
 	&& make install \
 	&& colmap -h
+RUN prisma db push

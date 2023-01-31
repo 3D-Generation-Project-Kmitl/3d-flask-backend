@@ -10,14 +10,20 @@ import aspose.threed as a3d
 
 from prisma import Prisma, register
 from prisma.models import Model
+from rq import Queue
+from rq.job import Job
+from worker import conn
+import asyncio
+from prisma import Prisma
 
-db = Prisma()
-db.connect()
-register(db)
+
 
 app=Flask(__name__,static_folder="./data")
+app.config.from_object(os.environ['APP_SETTINGS'])
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
+
+q = Queue(connection=conn)
 
 def replaceWordInTransformsJson(transforms_file_path):
     with open(transforms_file_path, 'r') as file:
@@ -47,24 +53,50 @@ def do_system(arg):
 	if err:
 		print("FATAL: command failed")
 		# sys.exit(err)
+
+
 @app.route('/hello',methods = ['GET'])
 def get():
     return 'Hello From Generate3DModel API'
 
 
-@app.route('/gen3DModel',methods = ['POST'])
-def post():
-    base_folder_path='./'
-        
-    f = request.files['video']
-    video_path='./data/video/'+secure_filename(f.filename)
-    envs_path='/home/jupyter-orachat/.conda/envs/dmodel/bin/'
-    f.save(video_path)
+def createNewModel(user_id,video_path):
+    prisma = Prisma()
+    prisma.connect()
+    # write your queries here
+    model = prisma.model.create(
+        data={
+            'userId': user_id,
+            'picture': video_path
+            'type': 'CREATE'
+        },
+    )
+
+    prisma.disconnect()
+    return model.dict()
+
+async def update3DModelPath(model_id,model_path):
+    prisma = Prisma()
+    await prisma.connect()
+    # write your queries here
+    model = await prisma.model.update(
+        where={
+        'id': model_id,
+        },
+        data={
+            'model':model_path
+        },
+    )
+
+    await prisma.disconnect()
+
+
+def generate3DModel(video_path,model_id):
     fps=getFPSForCOLMAP(video_path)
     aabb_scale=4
     camera_model="PINHOLE"
     n_steps=500
-
+    base_folder_path='../'
     try:
         video_name=f.filename.split('.')[0]
         task_name=f'{video_name}_{str(fps)}_{camera_model}'
@@ -83,24 +115,26 @@ def post():
             colmap_text_folder_path=folder_path+'colmap_text'
 
 
-            do_system(f'{envs_path}python3 {colmap2nerf_file_path} --video_in {video_path} --run_colmap --out {transforms_file_path} --video_fps {video_fps} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path}')
+            do_system(f'python3 {colmap2nerf_file_path} --video_in {video_path} --run_colmap --out {transforms_file_path} --video_fps {video_fps} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path}')
 
             colmap_images_folder_path='./data/video/images'
             rembg_images_folder_path=folder_path+'images_png'
-            do_system(f'{envs_path}rembg p {colmap_images_folder_path} {rembg_images_folder_path}')
+            do_system(f'rembg p {colmap_images_folder_path} {rembg_images_folder_path}')
             replaceWordInTransformsJson(transforms_file_path)
             run_instant_ngp_file_path=instant_ngp_scripts_folder_path+'run.py'
             output_mesh_file_path=folder_path+f'{task_name}.ply'
             model_snapshot_path=base_folder_path+'model_snapshot/saved_model.msgpack'
-            do_system(f'{envs_path}python3 {run_instant_ngp_file_path} --training_data {folder_path} --mode nerf --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path}')
+            do_system(f'python3 {run_instant_ngp_file_path} --training_data {folder_path} --mode nerf --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path}')
             
             scene = a3d.Scene.from_file(output_mesh_file_path)
             output_mesh_file_path_glb=folder_path+f'{task_name}.glb'
             
             scene.save(output_mesh_file_path_glb)
             do_system(f'rm ./data/video/images -r')
+
             try:
                 print(output_mesh_file_path_glb)
+                asyncio.run(update3DModelPath(model_id,output_mesh_file_path_glb))
                 return output_mesh_file_path_glb
             except Exception as e:
                 print(e)
@@ -110,7 +144,27 @@ def post():
         do_system(f'rm ./data/video/images -r')
         print(e)
         return make_response(e)
-      
+
+@app.route('/gen3DModel',methods = ['POST'])
+def post():
+
+    from app import generate3DModel
+
+
+    f = request.files['video']
+    video_path='../data/video/'+secure_filename(f.filename)
+    f.save(video_path)
+
+    user_id=request.form['userId']
+    newModel=createNewModel(user_id,video_path)
+    print(newModel)
+
+    job = q.enqueue_call(
+            func=generate3DModel, args=(video_path,newModel.modelId), result_ttl=86400
+        )
+    print(job.get_id())
+
+    return job.get_id()
 
 
 

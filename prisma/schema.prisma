@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-flask"
+  provider = "prisma-client-py"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = ไม่บอกหรอก อิอิ
+  url      = env("DATABASE_URL")
 }
 
 model User {
