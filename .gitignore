@@ -1,4 +1,3 @@
 data/*
 !data/.gitkeep
 .devcontainer/.env
-prisma/.env

@@ -8,18 +8,18 @@ import datetime
 from flask_cors import CORS
 import aspose.threed as a3d
 
-from prisma import Prisma, register
-from prisma.models import Model
 from rq import Queue
 from rq.job import Job
 from worker import conn
 import asyncio
-from prisma import Prisma
+
 
 
 
 app=Flask(__name__,static_folder="./data")
-app.config.from_object(os.environ['APP_SETTINGS'])
+
+# app.config.from_object(os.environ['APP_SETTINGS'])
+
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
@@ -59,39 +59,26 @@ def do_system(arg):
 def get():
     return 'Hello From Generate3DModel API'
 
+@app.route('/')
+def index():
+    n = len(q.jobs)
+
+    html = '<center><br /><br />'
+    for job in q.jobs:
+        html += f'<a href="job/{job.id}">{job.id}</a><br /><br />'
+    html += f'Total {n} Jobs in queue </center>'
+    return f"{html}"
+
 
 def createNewModel(user_id,video_path):
-    prisma = Prisma()
-    prisma.connect()
-    # write your queries here
-    model = prisma.model.create(
-        data={
-            'userId': user_id,
-            'picture': video_path
-            'type': 'CREATE'
-        },
-    )
 
-    prisma.disconnect()
-    return model.dict()
+    return None
 
 async def update3DModelPath(model_id,model_path):
-    prisma = Prisma()
-    await prisma.connect()
-    # write your queries here
-    model = await prisma.model.update(
-        where={
-        'id': model_id,
-        },
-        data={
-            'model':model_path
-        },
-    )
-
-    await prisma.disconnect()
+    pass
 
 
-def generate3DModel(video_path,model_id):
+def generate3DModel(video_path):
     fps=getFPSForCOLMAP(video_path)
     aabb_scale=4
     camera_model="PINHOLE"
@@ -134,7 +121,7 @@ def generate3DModel(video_path,model_id):
 
             try:
                 print(output_mesh_file_path_glb)
-                asyncio.run(update3DModelPath(model_id,output_mesh_file_path_glb))
+
                 return output_mesh_file_path_glb
             except Exception as e:
                 print(e)
@@ -146,26 +133,28 @@ def generate3DModel(video_path,model_id):
         return make_response(e)
 
 @app.route('/gen3DModel',methods = ['POST'])
-def post():
+def addTask():
 
     from app import generate3DModel
 
-
-    f = request.files['video']
+    f = request.files['images']
     video_path='../data/video/'+secure_filename(f.filename)
     f.save(video_path)
 
-    user_id=request.form['userId']
-    newModel=createNewModel(user_id,video_path)
-    print(newModel)
+    configs=request.form['configs']
+    print('f',f)
+    print('configs',configs)
 
-    job = q.enqueue_call(
-            func=generate3DModel, args=(video_path,newModel.modelId), result_ttl=86400
-        )
-    print(job.get_id())
+    # newModel=createNewModel(user_id,video_path)
+    # print(newModel)
 
-    return job.get_id()
+    # job = q.enqueue_call(
+    #         func=generate3DModel, args=(video_path), result_ttl=86400
+    #     )
+    
 
+    # return f'Task {job.get_id()} added to queue at {job.enqueued_at}. {len(q)} tasks in the queue.'
+    return "hello"
 
 
 

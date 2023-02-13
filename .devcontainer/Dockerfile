@@ -58,6 +58,7 @@ RUN echo "Installing apt packages..." \
 	libatlas-base-dev \
 	libqt5opengl5-dev \
 	libgoogle-glog-dev \
+	libpython3.8 \
 	libsuitesparse-dev \
 	python3-setuptools \
 	libreadline-gplv2-dev \
@@ -65,15 +66,6 @@ RUN echo "Installing apt packages..." \
 	&& apt clean -y \
 	&& export DEBIAN_FRONTEND=dialog
 
-RUN apt install python2.7
-ENV NODE_VERSION=18.13.0
-RUN apt install -y curl
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-ENV NVM_DIR=/root/.nvm
-RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
-RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
-RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
-ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 
 RUN echo "Installing Python ver. ${PYTHON_VERSION}..." \
 	&& cd /opt \
@@ -84,7 +76,7 @@ RUN echo "Installing Python ver. ${PYTHON_VERSION}..." \
 	&& make \
 	&& checkinstall
 
-COPY ./requirements.txt ./
+COPY requirements.txt ./
 
 RUN echo "Installing pip packages..." \
 	&& python3 -m pip install -U pip \
@@ -114,8 +106,3 @@ RUN echo "Installing COLMAP ver. ${COLMAP_VERSION}..." \
 	&& make -j3 \
 	&& make install \
 	&& colmap -h
-	
-
-RUN npm install -g prisma
-COPY ./prisma/schema.prisma ./prisma/
-RUN prisma db push

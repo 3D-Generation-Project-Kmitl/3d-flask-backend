@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/anaconda-postgres
 {
-	"name": "Flask API & PostgreSQL",
+	"name": "Flask API with Redis Task Queue",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "instant-ngp",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
