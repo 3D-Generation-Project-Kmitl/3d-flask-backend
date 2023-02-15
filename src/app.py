@@ -29,9 +29,9 @@ def get():
 @app.route('/')
 def index():
     text = "This is a very long text from your ex"
-    job = q.enqueue(
-            count_words, text
-        )
+    # job = q.enqueue(
+    #         count_words, text
+    #     )
     n = len(q.jobs)
 
     html = '<center><br /><br />'
@@ -55,7 +55,9 @@ def addTask():
 
     try:
         f = request.files['images']
-        images_zip_path='./data/video/'+secure_filename(f.filename)
+        if not os.path.exists('./data/raw_data/'):
+            os.mkdir('./data/raw_data/')
+        images_zip_path='./data/raw_data/'+secure_filename(f.filename)
         f.save(images_zip_path)
 
         # removeBackground=request.form['removeBackground']
@@ -71,7 +73,7 @@ def addTask():
         timestamp=str(time.time())
         text = "This is a very long text from your ex"
         job = q.enqueue(
-                count_words, text
+                generate3DModel, args=[images_zip_path,'phol',timestamp]
             )
 
 
