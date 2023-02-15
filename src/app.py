@@ -28,6 +28,10 @@ def get():
 
 @app.route('/')
 def index():
+    text = "This is a very long text from your ex"
+    job = q.enqueue(
+            count_words, text
+        )
     n = len(q.jobs)
 
     html = '<center><br /><br />'
@@ -81,7 +85,7 @@ def addTask():
 
 
 
-# if __name__=="__main__":
-#     app.run(host='0.0.0.0',port=443,debug=True)
+if __name__=="__main__":
+    app.run(host='0.0.0.0',port=os.getenv('FLASK_PORT'),debug=True)
 
 

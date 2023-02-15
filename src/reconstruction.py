@@ -1,19 +1,10 @@
 from flask import make_response
 import aspose.threed as a3d
 import time,requests
-from src.helpers import *
+from helpers import *
 def count_words(text):    
-    return len.text
-def getCatImage(delay):
+    return len(text)
 
-    # Simulate Delay
-    time.sleep(delay)
-
-    url = requests.get(
-        "https://api.thecatapi.com/v1/images/search").json()[0]['url']
-
-    # Result
-    return url
 def generate3DModel(images_zip_path,userId,modelId):
 
     aabb_scale=4

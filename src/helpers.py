@@ -1,6 +1,6 @@
 import os,sys
 import re
-import cv2
+# import cv2
 from zipfile import ZipFile
 
 def replaceWordInTransformsJson(transforms_file_path):

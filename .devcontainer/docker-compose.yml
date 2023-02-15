@@ -43,7 +43,7 @@ services:
     image: instantngp:latest
     build:
       context: ..
-      dockerfile: .devcontainer/Dockerfile
+      dockerfile: .devcontainer/Dockerfile_instant-ngp
     stdin_open: true
     tty: true
     environment:
@@ -51,40 +51,42 @@ services:
       DISPLAY: $DISPLAY
     volumes:
       - ../:/volume
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - ../..:/workspaces:cached
+      # - /tmp/.X11-unix:/tmp/.X11-unix
+      # - ../..:/workspaces:cached
     working_dir: /volume
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ['1']
-              capabilities: [gpu]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           capabilities: [gpu]
     command: python3 ./src/app.py
     env_file:
         - ../.env
     ports:
-      - 443:443
+      - ${FLASK_PORT}:${FLASK_PORT}
     depends_on:
       - redis
 
     restart: unless-stopped
 
   redis:
-    image: redis:7.0.8-alpine
+    image: redis:latest
     command: redis-server
-    ports:
-      - 6379:6379
+
+
+
   worker:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile_worker
+    volumes:
+        - ../:/volume
+    working_dir: /volume/src
     depends_on:
         - redis
-    command: rq worker --url redis://redis:6379
+    env_file:
+        - ../.env
+    command: rq worker --url ${REDIS_URL} default
     links:
         - redis
-
-# volumes:
-#   postgres-data:

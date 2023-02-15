@@ -15,3 +15,5 @@ rq
 asyncio
 python-dotenv
 aspose-3d
+pandas
+GPUtil
