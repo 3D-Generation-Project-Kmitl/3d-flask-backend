@@ -105,7 +105,7 @@ struct NerfDataset {
 		if (from_mitsuba) {
 			result *= -1;
 		} else {
-			result=Eigen::Vector3f(result.y(), result.z(), result.x());
+			result = Eigen::Vector3f(result.y(), result.z(), result.x());
 		}
 		return result;
 	}
@@ -164,8 +164,9 @@ struct NerfDataset {
 
 	void nerf_ray_to_ngp(Ray& ray, bool scale_direction = false) {
 		ray.o = ray.o * scale + offset;
-		if (scale_direction)
+		if (scale_direction) {
 			ray.d *= scale;
+		}
 
 		float tmp = ray.o[0];
 		ray.o[0] = ray.o[1];
@@ -179,7 +180,7 @@ struct NerfDataset {
 	}
 };
 
-NerfDataset load_nerf(const std::vector<filesystem::path>& jsonpaths, float sharpen_amount = 0.f);
+NerfDataset load_nerf(const std::vector<fs::path>& jsonpaths, float sharpen_amount = 0.f);
 NerfDataset create_empty_nerf_dataset(size_t n_images, int aabb_scale = 1, bool is_hdr = false);
 
 NGP_NAMESPACE_END

@@ -2,7 +2,7 @@ Flask~=2.2.2
 flask-cors
 Werkzeug~=2.2.2
 wheel~=0.38.4
-rembg
+rembg[gpu]
 commentjson~=0.9.0
 imageio~=2.16.0
 numpy

@@ -50,33 +50,29 @@ async def update3DModelPath(model_id,model_path):
 
 
 
-@app.route('/gen3DModel',methods = ['POST'])
+@app.route('/gen3DModel',methods = ['POST','GET'])
 def addTask():
 
     try:
-        f = request.files['images']
+
+        f = request.files['raw_data']
+
         if not os.path.exists('./data/raw_data/'):
             os.mkdir('./data/raw_data/')
-        images_zip_path='./data/raw_data/'+secure_filename(f.filename)
-        f.save(images_zip_path)
 
-        # removeBackground=request.form['removeBackground']
-        # quality=request.form['quality']
-        # print('f',f)
-        # print('removeBackground',removeBackground)
-        # print('quality',quality)
-    
-        # print('request.json',request.json)
+        raw_data_path='./data/raw_data/'+secure_filename(f.filename)
+        f.save(raw_data_path)
 
-        # newModel=createNewModel(user_id,images_path)
-        # print(newModel)
-        timestamp=str(time.time())
-        text = "This is a very long text from your ex"
+        reconstruction_configs={}
+        reconstruction_configs['raw_data_path']=raw_data_path
+        reconstruction_configs['model_id']=request.form['model_id']
+        reconstruction_configs['user_id']=request.form['user_id']
+        reconstruction_configs['object_detection']=request.form['object_detection']
+        reconstruction_configs['quality']=request.form['quality']
+
         job = q.enqueue(
-                generate3DModel, args=[images_zip_path,'phol',timestamp]
+                generate3DModel, args=[reconstruction_configs],result_ttl=86400
             )
-
-
         return f'Task {job.get_id()} added to queue at {job.enqueued_at}. {len(q)} tasks in the queue.'
 
     except Exception as e:

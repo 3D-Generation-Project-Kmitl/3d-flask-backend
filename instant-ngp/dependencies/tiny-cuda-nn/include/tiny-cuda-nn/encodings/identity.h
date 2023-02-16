@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2020-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted
  * provided that the following conditions are met:
@@ -45,7 +45,6 @@ TCNN_NAMESPACE_BEGIN
 template <typename T>
 __global__ void identity(
 	const uint32_t num_outputs,
-	const uint32_t num_elements,
 	const uint32_t num_to_encode,
 	const uint32_t num_to_pad,
 	const float scale,
@@ -70,7 +69,6 @@ __global__ void identity(
 template <typename T>
 __global__ void identity_backward(
 	const uint32_t num_outputs,
-	const uint32_t num_elements,
 	const uint32_t n_dims_to_encode,
 	const float scale,
 	MatrixView<const T> dL_dy,
@@ -107,7 +105,6 @@ public:
 
 		linear_kernel(identity<T>, 0, stream,
 			input.n() * padded_output_width(),
-			input.n(),
 			m_n_dims_to_encode,
 			m_n_to_pad,
 			m_scale,
@@ -135,7 +132,6 @@ public:
 
 		linear_kernel(identity_backward<T>, 0, stream,
 			input.n() * m_n_dims_to_encode,
-			input.n(),
 			m_n_dims_to_encode,
 			m_scale,
 			dL_doutput.view(),

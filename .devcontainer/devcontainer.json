@@ -3,7 +3,7 @@
 {
 	"name": "Flask API with Redis Task Queue",
 	"dockerComposeFile": "docker-compose.yml",
-	"service": "instant-ngp",
+	"service": "instant-ngp-worker",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
 
 	// Features to add to the dev container. More info: https://containers.dev/features.

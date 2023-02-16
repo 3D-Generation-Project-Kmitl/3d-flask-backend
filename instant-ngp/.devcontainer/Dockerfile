@@ -76,7 +76,7 @@ RUN echo "Installing Ceres Solver ver. ${CERES_SOLVER_VERSION}..." \
 	&& mkdir ./build \
 	&& cd ./build \
 	&& cmake ../ -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF \
-	&& make -j3 \
+	&& make -j \
 	&& make install
 
 RUN echo "Installing COLMAP ver. ${COLMAP_VERSION}..." \
@@ -87,6 +87,6 @@ RUN echo "Installing COLMAP ver. ${COLMAP_VERSION}..." \
 	&& mkdir ./build \
 	&& cd ./build \
 	&& cmake ../ \
-	&& make -j3 \
+	&& make -j \
 	&& make install \
 	&& colmap -h

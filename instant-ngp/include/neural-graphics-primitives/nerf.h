@@ -25,6 +25,10 @@ inline constexpr __device__ uint32_t NERF_GRIDSIZE() {
 	return 128;
 }
 
+inline constexpr __device__ uint32_t NERF_GRID_N_CELLS() {
+	return NERF_GRIDSIZE() * NERF_GRIDSIZE() * NERF_GRIDSIZE();
+}
+
 struct NerfPayload {
 	Eigen::Vector3f origin;
 	Eigen::Vector3f dir;
@@ -36,7 +40,7 @@ struct NerfPayload {
 };
 
 struct RaysNerfSoa {
-#ifdef __NVCC__
+#if defined(__NVCC__) || (defined(__clang__) && defined(__CUDA__))
 	void copy_from_other_async(const RaysNerfSoa& other, cudaStream_t stream) {
 		CUDA_CHECK_THROW(cudaMemcpyAsync(rgba, other.rgba, size * sizeof(Eigen::Array4f), cudaMemcpyDeviceToDevice, stream));
 		CUDA_CHECK_THROW(cudaMemcpyAsync(depth, other.depth, size * sizeof(float), cudaMemcpyDeviceToDevice, stream));

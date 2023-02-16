@@ -227,10 +227,14 @@ TEST(compile_test, format_to_n) {
   EXPECT_STREQ("2a", buffer);
 }
 
-TEST(compile_test, formatted_size) {
-  EXPECT_EQ(2, fmt::formatted_size(FMT_COMPILE("{0}"), 42));
-  EXPECT_EQ(5, fmt::formatted_size(FMT_COMPILE("{0:<4.2f}"), 42.0));
+#ifdef __cpp_lib_bit_cast
+TEST(compile_test, constexpr_formatted_size) {
+  FMT_CONSTEXPR20 size_t s1 = fmt::formatted_size(FMT_COMPILE("{0}"), 42);
+  EXPECT_EQ(2, s1);
+  FMT_CONSTEXPR20 size_t s2 = fmt::formatted_size(FMT_COMPILE("{0:<4.2f}"), 42.0);
+  EXPECT_EQ(5, s2);
 }
+#endif
 
 TEST(compile_test, text_and_arg) {
   EXPECT_EQ(">>>42<<<", fmt::format(FMT_COMPILE(">>>{}<<<"), 42));
@@ -300,8 +304,9 @@ TEST(compile_test, compile_format_string_literal) {
 //  (compiler file
 //  'D:\a\_work\1\s\src\vctools\Compiler\CxxFE\sl\p1\c\constexpr\constexpr.cpp',
 //  line 8635)
-#if ((FMT_CPLUSPLUS >= 202002L) &&                    \
-     (!FMT_MSC_VERSION || FMT_MSC_VERSION < 1930)) || \
+#if ((FMT_CPLUSPLUS >= 202002L) &&                           \
+     (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE > 9) && \
+     (!FMT_MSC_VERSION || FMT_MSC_VERSION < 1930)) ||        \
     (FMT_CPLUSPLUS >= 201709L && FMT_GCC_VERSION >= 1002)
 template <size_t max_string_length, typename Char = char> struct test_string {
   template <typename T> constexpr bool operator==(const T& rhs) const noexcept {

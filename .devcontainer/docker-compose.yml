@@ -52,7 +52,7 @@ services:
       - ../:/volume
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ../..:/workspaces:cached
-    working_dir: /volume
+    working_dir: /volume/src
     deploy:
       resources:
         reservations:
@@ -63,7 +63,7 @@ services:
         - redis
     env_file:
         - ../.env
-    command: python3 ../src/worker.py
+    command: python3 worker.py
     links:
         - redis
     restart: unless-stopped

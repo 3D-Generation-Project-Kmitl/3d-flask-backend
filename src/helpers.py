@@ -3,7 +3,13 @@ import re
 # import cv2
 from zipfile import ZipFile
 
-
+def getMarchingCubesRes(quality):
+    if(quality=='High'):
+        return 256
+    elif(quality=='Medium'):
+        return 512
+    else:
+        return 256
 def replaceWordInTransformsJson(transforms_file_path):
     with open(transforms_file_path, 'r') as file:
         data = file.read()
