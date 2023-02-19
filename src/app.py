@@ -1,7 +1,7 @@
 from flask import Flask, request,make_response
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
-from rq import Queue
+from rq import Queue,Retry
 from rq.job import Job
 import redis
 import asyncio
@@ -9,6 +9,7 @@ import os,time
 from dotenv import load_dotenv
 
 from reconstruction import *
+from constants import *
 
 
 load_dotenv()
@@ -20,7 +21,7 @@ app=Flask(__name__,static_folder="./data")
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 r = redis.Redis(host=os.getenv('REDIS_HOST'), port=os.getenv('REDIS_PORT'))
-q = Queue(connection=r)
+q = Queue(QUEUE_NAME,connection=r)
 
 @app.route('/hello',methods = ['GET'])
 def get():
@@ -29,9 +30,6 @@ def get():
 @app.route('/')
 def index():
     text = "This is a very long text from your ex"
-    # job = q.enqueue(
-    #         count_words, text
-    #     )
     n = len(q.jobs)
 
     html = '<center><br /><br />'
@@ -71,7 +69,10 @@ def addTask():
         reconstruction_configs['quality']=request.form['quality']
 
         job = q.enqueue(
-                generate3DModel, args=[reconstruction_configs],result_ttl=86400
+                generate3DModel
+                , args=[reconstruction_configs]
+                ,job_timeout='1h'
+                ,retry=Retry(max=FAILED_JOBS_RETRY)
             )
         return f'Task {job.get_id()} added to queue at {job.enqueued_at}. {len(q)} tasks in the queue.'
 
