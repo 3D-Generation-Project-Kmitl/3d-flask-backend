@@ -2,6 +2,7 @@ from flask import make_response
 import aspose.threed as a3d
 import time,requests
 from helpers import *
+from constants import *
 from rq import Queue,Retry
 
 def count_words(text):    
@@ -55,13 +56,23 @@ def generate3DModel(reconstruction_configs):
         
         scene = a3d.Scene.from_file(output_mesh_file_path)
         output_mesh_file_path_glb=folder_path+f'{task_name}.glb'
+        picture_url=folder_path+f'{task_name}.jpg'
         scene.save(output_mesh_file_path_glb)
+
+        renderAndSave3DIn2DImages(output_mesh_file_path_glb,picture_url)
+
+        sendRequestToUpdate3DModel(model_id,output_mesh_file_path_glb,picture_url)
         # do_system(f'rm {images_path} -r')
         return output_mesh_file_path_glb
     except Exception as e:
         # do_system(f'rm {images_path} -r')
         print(e)
         return e
+def sendRequestToUpdate3DModel(model_id,model_url,picture_url):
+    r = requests.put(f'{PURECHOO_BACKEND_URL}/reconstruction', data ={'modelId':model_id
+                                                        ,'model':model_url
+                                                        ,'picture':picture_url})
+
 
 # def onSuccess(job, connection, result, *args, **kwargs):
 #     print(result)

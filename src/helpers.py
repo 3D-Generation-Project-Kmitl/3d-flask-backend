@@ -5,6 +5,9 @@ import cv2
 from zipfile import ZipFile
 import GPUtil
 from constants import *
+import numpy as np
+import pyrender
+import trimesh
 
 def isGPUMemoryLow():
     print('GPU Memory free',GPUtil.getGPUs()[0].memoryFree)
@@ -12,6 +15,29 @@ def isGPUMemoryLow():
 def waitWhenGPUMemoryLow():
     while isGPUMemoryLow():
         time.sleep(5)
+def renderAndSave3DIn2DImages(mesh_path,image_path):
+
+    model = trimesh.load(mesh_path)
+    mesh = pyrender.Mesh.from_trimesh(model, smooth=False)
+
+
+    scene = pyrender.Scene(ambient_light=[.1, .1, .3], bg_color=[0, 0, 0])
+    camera = pyrender.PerspectiveCamera( yfov=np.pi / 3.0)
+    light = pyrender.DirectionalLight(color=[1,1,1], intensity=2e3)
+
+    scene.add(mesh, pose=  np.eye(4))
+    scene.add(light, pose=  np.eye(4))
+
+    c = 2**-0.5
+    scene.add(camera, pose=[[ 1,  0,  0,  0],
+                            [ 0,  c, -c, -2],
+                            [ 0,  c,  c,  2],
+                            [ 0,  0,  0,  1]])
+
+    r = pyrender.OffscreenRenderer(512, 512)
+    color, _ = r.render(scene)
+    cv2.imwrite(image_path,color)
+
 def getMarchingCubesRes(quality):
     if(quality=='High'):
         return HIGH_MARCHING_CUBES_RES

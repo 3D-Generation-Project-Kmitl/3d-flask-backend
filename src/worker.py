@@ -6,7 +6,7 @@ from app import app
 
 listen = ['default']
 
-redis_url = os.getenv('REDIS_URL')
+redis_url = os.getenv('REDIS_URL','redis://redis:6379')
 
 conn = redis.from_url(redis_url)
 
