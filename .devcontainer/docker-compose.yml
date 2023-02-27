@@ -84,7 +84,7 @@ services:
     depends_on:
         - redis
     env_file:
-        - .env
+        - ../.env
     command: python3 ./src/app.py
     links:
         - redis

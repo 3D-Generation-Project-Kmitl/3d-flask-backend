@@ -1,3 +1,5 @@
+import json
+import math
 import os,sys
 import re
 import time
@@ -10,11 +12,55 @@ import pyrender
 import trimesh
 
 def isGPUMemoryLow():
-    print('GPU Memory free',GPUtil.getGPUs()[0].memoryFree)
+    print('GPU Memory free',GPUtil.getGPUs()[0].memoryFree, file=sys.stderr)
     return GPUtil.getGPUs()[0].memoryFree < GPU_MEMORY_THRESHOLD
 def waitWhenGPUMemoryLow():
-    while isGPUMemoryLow():
+    while x:
+        x=isGPUMemoryLow()
         time.sleep(5)
+def saveTransformJson(camera_data,transforms_file_path):
+    print('type(camera_data)',type(camera_data))
+    second_parameter=camera_data[1]['camera_parameter']
+    w = second_parameter['imageWidth']
+    h = second_parameter['imageHeight']
+    fl_x = second_parameter['focalLength'][0]
+    fl_y = second_parameter['focalLength'][1]
+    k1 = 0
+    k2 = 0
+    k3 = 0
+    k4 = 0
+    p1 = second_parameter['focalLength'][0]
+    p2 = second_parameter['focalLength'][1]
+    cx = w / 2
+    cy = h / 2
+    angle_x = math.atan(w / (fl_x * 2)) * 2
+    angle_y = math.atan(h / (fl_y * 2)) * 2
+    fovx = angle_x * 180 / math.pi
+    fovy = angle_y * 180 / math.pi
+    out = {
+			"camera_angle_x": angle_x,
+			"camera_angle_y": angle_y,
+			"fl_x": fl_x,
+			"fl_y": fl_y,
+			"k1": k1,
+			"k2": k2,
+			"k3": k3,
+			"k4": k4,
+			"p1": p1,
+			"p2": p2,
+			"cx": cx,
+			"cy": cy,
+			"w": w,
+			"h": h,
+			"aabb_scale": 4,
+			"frames": [],
+		}
+    for cam in camera_data:
+        print('cam',cam['camera_parameter'])
+        frame = {"file_path":cam['file_path'],"transform_matrix": cam['camera_parameter']['cameraPose']} 
+        out['frames'].append(frame)
+    with open(transforms_file_path, "w") as outfile:
+	    json.dump(out, outfile, indent=2)
 def renderAndSave3DIn2DImages(mesh_path,image_path):
 
     model = trimesh.load(mesh_path)
@@ -52,12 +98,19 @@ def replaceWordInTransformsJson(transforms_file_path):
         data =data.replace("jpg", "png")
     with open(transforms_file_path, 'w') as file:
         file.write(data)
-def unZipImages(imagesZipPath,images_path):
-    with ZipFile(imagesZipPath,'r') as zObject:
+    
+def unZipImages(image_zip_path,images_path):
+    with ZipFile(image_zip_path,'r') as zObject:
         if os.path.exists(images_path):
             do_system(f'rm {images_path} -r')
         os.mkdir(images_path)
         zObject.extractall(path=images_path)
+
+def constructTransformsJson():
+     pass
+
+
+
 
 def do_system(arg):
 	print(f"==== running: {arg}")
