@@ -1,0 +1,4 @@
+# Hashes of file build rules.
+4a6f45ff1daf89966aac8d880c1bc605 dependencies/OpenXR-SDK/CMakeFiles/uninstall
+03194fb1ad2f7e445a72ae4f5ee2d874 dependencies/OpenXR-SDK/src/loader/CMakeFiles/libopenxr_loader.so.1.0
+42bddabc3141761c5805c49856ebd126 optix_ptx.h
