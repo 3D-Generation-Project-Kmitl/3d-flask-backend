@@ -18,11 +18,15 @@ def waitWhenGPUMemoryLow():
     while x:
         x=isGPUMemoryLow()
         time.sleep(5)
-def saveTransformJson(camera_data,transforms_file_path):
+def saveTransformJson(camera_data,transforms_file_path,images_path):
     print('type(camera_data)',type(camera_data))
     second_parameter=camera_data[1]['camera_parameter']
-    w = second_parameter['imageWidth']
-    h = second_parameter['imageHeight']
+    img = cv2.imread(f'{images_path}/0001.jpg')
+    h=float(img.shape[1])
+    w=float(img.shape[0])
+    # w = second_parameter['imageWidth']
+    # h = second_parameter['imageHeight']
+
     fl_x = second_parameter['focalLength'][0]
     fl_y = second_parameter['focalLength'][1]
     k1 = 0
@@ -48,6 +52,7 @@ def saveTransformJson(camera_data,transforms_file_path):
 			"k4": k4,
 			"p1": p1,
 			"p2": p2,
+            "is_fisheye": False,
 			"cx": cx,
 			"cy": cy,
 			"w": w,

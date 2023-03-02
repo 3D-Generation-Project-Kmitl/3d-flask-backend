@@ -62,16 +62,17 @@ def addTask():
         reconstruction_configs['quality']=request.form['quality']
         if request.form['camera_parameter'] is not None:
             reconstruction_configs['camera_data']=json.loads(request.form['camera_parameter'])
+        else:
+            reconstruction_configs['camera_data']=None
         print(f'reconstruction_configs: {reconstruction_configs}',file=sys.stderr)
         
         job = q.enqueue(
                 generate3DModel
                 , args=[reconstruction_configs]
                 ,job_timeout='1h'
-                ,retry=Retry(max=FAILED_JOBS_RETRY)
+                # ,retry=Retry(max=FAILED_JOBS_RETRY)
             )
         return f'Task {job.get_id()} added to queue at {job.enqueued_at}. {len(q)} tasks in the queue.'
-        return "hello world"
     except Exception as e:
         print(e)
         return make_response(e)
