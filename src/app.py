@@ -12,7 +12,7 @@ from constants import *
 
 
 
-app=Flask(__name__,static_folder="./data")
+app=Flask(__name__,static_folder="../data")
 
 # app.config.from_object(os.getenv('APP_SETTINGS'))
 
@@ -60,10 +60,12 @@ def addTask():
         reconstruction_configs['user_id']=request.form['user_id']
         reconstruction_configs['object_detection']=request.form['object_detection']
         reconstruction_configs['quality']=request.form['quality']
+        reconstruction_configs['google_ARCore']=request.form['google_ARCore']
         if request.form['camera_parameter'] is not None:
             reconstruction_configs['camera_data']=json.loads(request.form['camera_parameter'])
         else:
             reconstruction_configs['camera_data']=None
+        
         print(f'reconstruction_configs: {reconstruction_configs}',file=sys.stderr)
         
         job = q.enqueue(

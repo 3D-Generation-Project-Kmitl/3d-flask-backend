@@ -18,6 +18,38 @@ def waitWhenGPUMemoryLow():
     while x:
         x=isGPUMemoryLow()
         time.sleep(5)
+def rotmat(a, b):
+	a, b = a / np.linalg.norm(a), b / np.linalg.norm(b)
+	v = np.cross(a, b)
+	c = np.dot(a, b)
+	# handle exception for the opposite direction input
+	if c < -1 + 1e-10:
+		return rotmat(a + np.random.uniform(-1e-2, 1e-2, 3), b)
+	s = np.linalg.norm(v)
+	kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+	return np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2 + 1e-10))
+
+def closest_point_2_lines(oa, da, ob, db): # returns point closest to both rays of form o+t*d, and a weight factor that goes to 0 if the lines are parallel
+	da = da / np.linalg.norm(da)
+	db = db / np.linalg.norm(db)
+	c = np.cross(da, db)
+	denom = np.linalg.norm(c)**2
+	t = ob - oa
+	ta = np.linalg.det([t, db, c]) / (denom + 1e-10)
+	tb = np.linalg.det([t, da, c]) / (denom + 1e-10)
+	if ta > 0:
+		ta = 0
+	if tb > 0:
+		tb = 0
+	return (oa+ta*da+ob+tb*db) * 0.5, denom
+def variance_of_laplacian(image):
+	return cv2.Laplacian(image, cv2.CV_64F).var()
+def sharpness(imagePath):
+	image = cv2.imread(imagePath)
+	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+	fm = variance_of_laplacian(gray)
+	return fm
+     
 def saveTransformJson(camera_data,transforms_file_path,images_path):
     print('type(camera_data)',type(camera_data))
     second_parameter=camera_data[1]['camera_parameter']
@@ -33,10 +65,10 @@ def saveTransformJson(camera_data,transforms_file_path,images_path):
     k2 = 0
     k3 = 0
     k4 = 0
-    p1 = second_parameter['focalLength'][0]
-    p2 = second_parameter['focalLength'][1]
-    cx = w / 2
-    cy = h / 2
+    p1 = 0
+    p2 = 0
+    cx = second_parameter['principlePoint'][0]
+    cy = second_parameter['principlePoint'][1]
     angle_x = math.atan(w / (fl_x * 2)) * 2
     angle_y = math.atan(h / (fl_y * 2)) * 2
     fovx = angle_x * 180 / math.pi
@@ -60,12 +92,93 @@ def saveTransformJson(camera_data,transforms_file_path,images_path):
 			"aabb_scale": 4,
 			"frames": [],
 		}
+    out2 = {
+			"camera_angle_x": angle_x,
+			"camera_angle_y": angle_y,
+			"fl_x": fl_x,
+			"fl_y": fl_y,
+			"k1": k1,
+			"k2": k2,
+			"k3": k3,
+			"k4": k4,
+			"p1": p1,
+			"p2": p2,
+            "is_fisheye": False,
+			"cx": cx,
+			"cy": cy,
+			"w": w,
+			"h": h,
+			"aabb_scale": 4,
+			"frames": [],
+		}
+    up = np.zeros(3)
     for cam in camera_data:
-        print('cam',cam['camera_parameter'])
-        frame = {"file_path":cam['file_path'],"transform_matrix": cam['camera_parameter']['cameraPose']} 
+        # print('cam',cam['camera_parameter'])
+        print('pure',cam['camera_parameter']['cameraPose'], file=sys.stderr)
+        print('phol',type(cam['camera_parameter']['cameraPose']), file=sys.stderr)
+        
+        print('camPse ',cam['camera_parameter']['cameraPose'])
+        print('np array ',np.array(cam['camera_parameter']['cameraPose']))
+        c2w = np.linalg.inv(cam['camera_parameter']['cameraPose'])
+        # c2w=np.array(cam['camera_parameter']['cameraPose'])
+        # c2w[0:3,2] *= -1 # flip the y and z axis
+        # c2w[0:3,1] *= -1
+        # c2w = c2w[[1,0,2,3],:]
+        # c2w[2,:] *= -1 # flip whole world upside dow
+        # up += c2w[0:3,1]
+        # b = sharpness('./'+cam['file_path'])
+        frame = {"file_path":cam['file_path'],"sharpness":100,"transform_matrix": c2w}
+        # frame2 = {"file_path":cam['file_path'],"transform_matrix": cam['camera_parameter']['cameraPose']} 
         out['frames'].append(frame)
+        # out2['frames'].append(frame2)
+    flip_mat = np.array([
+			[1, 0, 0, 0],
+			[0, -1, 0, 0],
+			[0, 0, -1, 0],
+			[0, 0, 0, 1]
+		])
+
+    for f in out["frames"]:
+        f["transform_matrix"] = np.matmul(f["transform_matrix"], flip_mat) # flip cameras (it just works)
+    # nframes = len(out["frames"])
+    # print("np.linalg.norm(up) was",np.linalg.norm(up))
+    # up = up / np.linalg.norm(up)
+    # print("up vector was", up)
+    # R = rotmat(up,[0,0,1]) # rotate up vector to [0,0,1]
+    # R = np.pad(R,[0,1])
+    # R[-1, -1] = 1
+    # for f in out["frames"]:
+    #     f["transform_matrix"] = np.matmul(R, f["transform_matrix"]) # rotate up to be the z axis
+    # # find a central point they are all looking at
+    # print("computing center of attention...")
+    # totw = 0.0
+    # totp = np.array([0.0, 0.0, 0.0])
+    # for f in out["frames"]:
+    #     mf = f["transform_matrix"][0:3,:]
+    #     for g in out["frames"]:
+    #         mg = g["transform_matrix"][0:3,:]
+    #         p, w = closest_point_2_lines(mf[:,3], mf[:,2], mg[:,3], mg[:,2])
+    #         if w > 0.00001:
+    #             totp += p*w
+    #             totw += w
+    # if totw > 0.0:
+    #     totp /= totw
+    # print(totp) # the cameras are looking at totp
+    # for f in out["frames"]:
+    #     f["transform_matrix"][0:3,3] -= totp
+    # avglen = 0.
+    # for f in out["frames"]:
+    #     avglen += np.linalg.norm(f["transform_matrix"][0:3,3])
+    # avglen /= nframes
+    # print("avg camera distance from origin", avglen)
+    # for f in out["frames"]:
+    #     f["transform_matrix"][0:3,3] *= 4.0 / avglen # scale to "nerf sized"
+    for f in out["frames"]:
+        f["transform_matrix"] = f["transform_matrix"].tolist()
     with open(transforms_file_path, "w") as outfile:
-	    json.dump(out, outfile, indent=2)
+        json.dump(out, outfile, indent=2)
+    # with open(images_path+'/pure.json', "w") as outfile:
+    #     json.dump(out, outfile, indent=2)
 def renderAndSave3DIn2DImages(mesh_path,image_path):
 
     model = trimesh.load(mesh_path)
@@ -101,6 +214,12 @@ def replaceWordInTransformsJson(transforms_file_path):
         data = file.read()
         data = re.sub(r"(?<=\")[^\"]*images", 'images_png', data)
         data =data.replace("jpg", "png")
+    with open(transforms_file_path, 'w') as file:
+        file.write(data)
+def replaceWordInTransformsJson_Not_REMBG(transforms_file_path):
+    with open(transforms_file_path, 'r') as file:
+        data = file.read()
+        data = re.sub(r"(?<=\")[^\"]*images", 'images', data)
     with open(transforms_file_path, 'w') as file:
         file.write(data)
     

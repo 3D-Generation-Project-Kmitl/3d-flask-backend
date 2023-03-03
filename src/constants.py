@@ -2,7 +2,7 @@ import os,time
 from dotenv import load_dotenv
 load_dotenv()
 
-HIGH_MARCHING_CUBES_RES=512 #1024 may cause out of memory
+HIGH_MARCHING_CUBES_RES=1024 #1024 may cause out of memory
 MEDIUM_MARCHING_CUBES_RES=512
 LOW_MARCHING_CUBES_RES=256
 GPU_MEMORY_THRESHOLD=20000 #MB

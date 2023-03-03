@@ -24,6 +24,10 @@ def generate3DModel(reconstruction_configs):
         run_rembg=False
     else:
         run_rembg=True
+    if reconstruction_configs['google_ARCore']=='false':
+        use_google_arcore=False
+    else:
+        use_google_arcore=True
 
     camera_data=reconstruction_configs['camera_data']
     aabb_scale=4
@@ -47,7 +51,7 @@ def generate3DModel(reconstruction_configs):
 
         unZipImages(raw_data_path,images_path)
 
-        if camera_data is None:
+        if camera_data is None or not use_google_arcore:
             do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite')
         else:
             saveTransformJson(camera_data,transforms_file_path,images_path)
@@ -56,6 +60,9 @@ def generate3DModel(reconstruction_configs):
             rembg_images_folder_path=folder_path+'images_png'
             do_system(f'rembg p {images_path} {rembg_images_folder_path}')
             replaceWordInTransformsJson(transforms_file_path)
+        else:
+            replaceWordInTransformsJson_Not_REMBG(transforms_file_path)
+            
         run_instant_ngp_file_path=instant_ngp_scripts_folder_path+'run.py'
         output_mesh_file_path=folder_path+f'{task_name}.ply'
         model_snapshot_path=base_folder_path+'model_snapshot/saved_model.msgpack'
@@ -63,7 +70,8 @@ def generate3DModel(reconstruction_configs):
         do_system(f'python3 {run_instant_ngp_file_path} --scene {folder_path} --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path} --marching_cubes_res {marching_cubes_res}')
 
         scene = a3d.Scene.from_file(output_mesh_file_path)
-        output_mesh_file_path_glb=folder_path+f'{task_name}.glb'
+        file_storage_url=os.getenv('FILE_STORAGE_URL')
+        output_mesh_file_path_glb=f'{file_storage_url}/{task_name}/{task_name}.glb'
         scene.save(output_mesh_file_path_glb)
         sendRequestToUpdate3DModel(model_id,output_mesh_file_path_glb)
 
@@ -74,7 +82,10 @@ def generate3DModel(reconstruction_configs):
         print(e)
         return e
 def sendRequestToUpdate3DModel(model_id,model_url):
-    r = requests.put(f'{PURECHOO_BACKEND_URL}/model/reconstruction', data ={'modelId':model_id
+    print('sendRequestToUpdate3DModel',file=sys.stderr)
+    model_id=int(model_id)
+    print('model_id type',type(model_id))
+    r = requests.put(f'{PURECHOO_BACKEND_URL}/model/reconstruction', json ={'modelId':model_id
                                                         ,'model':model_url
                                                         })
 
