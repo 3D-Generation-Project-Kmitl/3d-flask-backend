@@ -19,3 +19,5 @@ trimesh
 pandas
 GPUtil
 pyrender
+scikit-image
+open3d

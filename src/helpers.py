@@ -237,10 +237,12 @@ def constructTransformsJson():
 
 
 def do_system(arg):
-	print(f"==== running: {arg}")
-	err = os.system(arg)
-	if err:
-		print("FATAL: command failed")
+    print(f"==== running: {arg}")
+    uid = os.getuid()
+    os.setuid(uid)
+    err = os.system(arg)
+    if err:
+        print("FATAL: command failed")
 		# sys.exit(err)
 # def getFPSForCOLMAP(video_path):
 #     fps=128.0/getVideoDurationInSeconds(video_path)

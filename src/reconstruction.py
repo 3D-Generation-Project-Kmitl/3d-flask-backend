@@ -47,32 +47,34 @@ def generate3DModel(reconstruction_configs):
         colmap2nerf_file_path=instant_ngp_scripts_folder_path+'colmap2nerf.py'
         colmap_db_file_path=folder_path+'colmap.db'
         colmap_text_folder_path=folder_path+'colmap_text'
-        images_path=f'{folder_path}/images'
+
+        #change back to /images
+        images_path=f'{folder_path}'
 
         unZipImages(raw_data_path,images_path)
 
-        if camera_data is None or not use_google_arcore:
-            do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite')
-        else:
-            saveTransformJson(camera_data,transforms_file_path,images_path)
+        # if camera_data is None or not use_google_arcore:
+        #     do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite')
+        # else:
+        #     saveTransformJson(camera_data,transforms_file_path,images_path)
 
-        if run_rembg:
-            rembg_images_folder_path=folder_path+'images_png'
-            do_system(f'rembg p {images_path} {rembg_images_folder_path}')
-            replaceWordInTransformsJson(transforms_file_path)
-        else:
-            replaceWordInTransformsJson_Not_REMBG(transforms_file_path)
+        # if run_rembg:
+        #     rembg_images_folder_path=folder_path+'images_png'
+        #     do_system(f'rembg p {images_path} {rembg_images_folder_path}')
+        #     replaceWordInTransformsJson(transforms_file_path)
+        # else:
+        #     replaceWordInTransformsJson_Not_REMBG(transforms_file_path)
             
         run_instant_ngp_file_path=instant_ngp_scripts_folder_path+'run.py'
         output_mesh_file_path=folder_path+f'{task_name}.ply'
         model_snapshot_path=base_folder_path+'model_snapshot/saved_model.msgpack'
 
-        do_system(f'python3 {run_instant_ngp_file_path} --scene {folder_path} --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path} --marching_cubes_res {marching_cubes_res}')
+        do_system(f'python3 {run_instant_ngp_file_path} --scene {folder_path} --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path} --marching_cubes_res {marching_cubes_res} --save_poisson_mesh {folder_path}')
 
         scene = a3d.Scene.from_file(output_mesh_file_path)
         file_storage_url=os.getenv('FILE_STORAGE_URL')
         output_mesh_file_path_glb=f'{file_storage_url}/{task_name}/{task_name}.glb'
-        scene.save(output_mesh_file_path_glb)
+        scene.save(f'{folder_path}{task_name}.glb')
         sendRequestToUpdate3DModel(model_id,output_mesh_file_path_glb)
 
         # do_system(f'rm {images_path} -r')
