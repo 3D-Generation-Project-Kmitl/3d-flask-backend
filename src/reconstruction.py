@@ -32,7 +32,7 @@ def generate3DModel(reconstruction_configs):
     camera_data=reconstruction_configs['camera_data']
     aabb_scale=4
     camera_model="PINHOLE"
-    n_steps=500
+    n_steps=1000
     base_folder_path='../'
 
     try:
@@ -48,22 +48,21 @@ def generate3DModel(reconstruction_configs):
         colmap_db_file_path=folder_path+'colmap.db'
         colmap_text_folder_path=folder_path+'colmap_text'
 
-        #change back to /images
-        images_path=f'{folder_path}'
+        images_path=f'{folder_path}/images'
 
         unZipImages(raw_data_path,images_path)
 
-        # if camera_data is None or not use_google_arcore:
-        #     do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite')
-        # else:
-        #     saveTransformJson(camera_data,transforms_file_path,images_path)
+        if camera_data is None or not use_google_arcore:
+            do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite')
+        else:
+            saveTransformJson(camera_data,transforms_file_path,images_path)
 
-        # if run_rembg:
-        #     rembg_images_folder_path=folder_path+'images_png'
-        #     do_system(f'rembg p {images_path} {rembg_images_folder_path}')
-        #     replaceWordInTransformsJson(transforms_file_path)
-        # else:
-        #     replaceWordInTransformsJson_Not_REMBG(transforms_file_path)
+        if run_rembg:
+            rembg_images_folder_path=folder_path+'images_png'
+            do_system(f'rembg p {images_path} {rembg_images_folder_path}')
+            replaceWordInTransformsJson(transforms_file_path)
+        else:
+            replaceWordInTransformsJson_Not_REMBG(transforms_file_path)
             
         run_instant_ngp_file_path=instant_ngp_scripts_folder_path+'run.py'
         output_mesh_file_path=folder_path+f'{task_name}.ply'

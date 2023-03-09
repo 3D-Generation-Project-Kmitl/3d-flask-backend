@@ -94,6 +94,7 @@ def extract_and_save_poisson_mesh(task_path,marching_mesh_path):
 	# pcd.estimate_normals()
 	# o3d.io.write_point_cloud(f"{task_path}point_cloud.ply", pcd)
 	pcd=o3d.io.read_point_cloud(marching_mesh_path)
+	o3d.io.write_point_cloud(f"{task_path}point_cloud.ply", pcd)
 
 	#poisson mesh
 	print("Computing Mesh... this may take a while.")
