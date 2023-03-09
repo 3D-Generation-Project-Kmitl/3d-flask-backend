@@ -78,28 +78,29 @@ def get_scene(scene):
 			return scenes[scene]
 	return None
 
-def extract_and_save_poisson_mesh(task_path):
+def extract_and_save_poisson_mesh(task_path,marching_mesh_path):
 	from skimage.util import view_as_blocks
 	from skimage import io
 	import open3d as o3d
-	image = io.imread(f'{task_path}.density_slices_256x256x256.png')
-	poisson_res=[256,256,256]
-	grid_3d = view_as_blocks(image, (poisson_res[1], poisson_res[0]))/255.0
-	grid_3d = grid_3d.reshape(-1, poisson_res[1], poisson_res[0])[:poisson_res[2], :, :].T 
-	# vertices = np.array(np.where(grid_3d > threshold)).T.astype(float)
-	vertices = np.array(grid_3d).T.astype(float)
-	print('point cloud shape : ',vertices.shape)
-	pcd = o3d.geometry.PointCloud()
-	pcd.points = o3d.utility.Vector3dVector(vertices)
-	pcd.estimate_normals()
-	o3d.io.write_point_cloud(f"{task_path}point_cloud.ply", pcd)
+	# image = io.imread(f'{task_path}.density_slices_256x256x256.png')
+	# poisson_res=[256,256,256]
+	# grid_3d = view_as_blocks(image, (poisson_res[1], poisson_res[0]))/255.0
+	# grid_3d = grid_3d.reshape(-1, poisson_res[1], poisson_res[0])[:poisson_res[2], :, :].T 
+	# # vertices = np.array(np.where(grid_3d > threshold)).T.astype(float)
+	# vertices = np.array(grid_3d).T.astype(float)
+	# print('point cloud shape : ',vertices.shape)
+	# pcd = o3d.geometry.PointCloud()
+	# pcd.points = o3d.utility.Vector3dVector(vertices)
+	# pcd.estimate_normals()
+	# o3d.io.write_point_cloud(f"{task_path}point_cloud.ply", pcd)
+	pcd=o3d.io.read_point_cloud(marching_mesh_path)
 
 	#poisson mesh
 	print("Computing Mesh... this may take a while.")
-	mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=9)
-	vertices_to_remove = densities < np.quantile(densities, 0.1)
-	mesh.remove_vertices_by_mask(vertices_to_remove)
-	mesh = mesh.filter_smooth_taubin(number_of_iterations=50)
+	mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=10)
+	# vertices_to_remove = densities < np.quantile(densities, 0.1)
+	# mesh.remove_vertices_by_mask(vertices_to_remove)
+	# mesh = mesh.filter_smooth_taubin(number_of_iterations=50)
 	print("\033[A\033[A")
 	print("[bold green]:white_check_mark: Computing Mesh")
 	print("Saving Mesh...")
@@ -300,12 +301,12 @@ if __name__ == "__main__":
 		print('type args.save_mesh ',type(args.save_mesh))
 		print(f"Generating mesh via marching cubes and saving to {args.save_mesh}. Resolution=[{res},{res},{res}]")
 		testbed.compute_and_save_marching_cubes_mesh(args.save_mesh, [res, res, res])
-	if args.save_poisson_mesh:
+
 		poisson_mesh_file_path=str(f'{args.save_poisson_mesh}')
 		print('poisson_mesh_file_path ',poisson_mesh_file_path)
 		print('type poisson_mesh_file_path ',type(poisson_mesh_file_path))
 		testbed.compute_and_save_png_slices(poisson_mesh_file_path,256)
-		extract_and_save_poisson_mesh(args.save_poisson_mesh)
+		extract_and_save_poisson_mesh(args.save_poisson_mesh,args.save_mesh)
 
 	if ref_transforms:
 		testbed.fov_axis = 0
