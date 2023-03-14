@@ -21,3 +21,4 @@ GPUtil
 pyrender
 scikit-image
 open3d
+pyquaternion

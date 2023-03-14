@@ -94,8 +94,4 @@ RUN echo "Installing COLMAP ver. ${COLMAP_VERSION}..." \
 	&& make install \
 	&& colmap -h
 
-# RUN cd /volume \
-# 	&& git clone --recursive https://github.com/nvlabs/instant-ngp \
-# 	&& cd instant-ngp \
-# 	&& cmake . -B build \
-# 	&& cmake --build build --config RelWithDebInfo -j
+
