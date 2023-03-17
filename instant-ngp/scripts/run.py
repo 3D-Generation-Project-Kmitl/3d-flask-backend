@@ -55,6 +55,7 @@ def parse_args():
 	parser.add_argument("--video_output", type=str, default="video.mp4", help="Filename of the output video.")
 
 	parser.add_argument("--save_mesh", default="", help="Output a marching-cubes based mesh from the NeRF or SDF model. Supports OBJ and PLY format.")
+	parser.add_argument("--save_poisson_mesh", default="", help="Output a poisson based mesh from the NeRF or SDF model. Supports OBJ and PLY format.")
 	parser.add_argument("--marching_cubes_res", default=256, type=int, help="Sets the resolution for the marching cubes grid.")
 
 	parser.add_argument("--width", "--screenshot_w", type=int, default=0, help="Resolution width of GUI and screenshots.")
@@ -77,23 +78,53 @@ def get_scene(scene):
 			return scenes[scene]
 	return None
 
+def extract_and_save_poisson_mesh(task_path,marching_mesh_path):
+	from skimage.util import view_as_blocks
+	from skimage import io
+	import open3d as o3d
+	# image = io.imread(f'{task_path}.density_slices_256x256x256.png')
+	# poisson_res=[256,256,256]
+	# grid_3d = view_as_blocks(image, (poisson_res[1], poisson_res[0]))/255.0
+	# grid_3d = grid_3d.reshape(-1, poisson_res[1], poisson_res[0])[:poisson_res[2], :, :].T 
+	# # vertices = np.array(np.where(grid_3d > threshold)).T.astype(float)
+	# vertices = np.array(grid_3d).T.astype(float)
+	# print('point cloud shape : ',vertices.shape)
+	# pcd = o3d.geometry.PointCloud()
+	# pcd.points = o3d.utility.Vector3dVector(vertices)
+	# pcd.estimate_normals()
+	# o3d.io.write_point_cloud(f"{task_path}point_cloud.ply", pcd)
+	pcd=o3d.io.read_point_cloud(marching_mesh_path)
+	o3d.io.write_point_cloud(f"{task_path}point_cloud.ply", pcd)
+
+	#poisson mesh
+	print("Computing Mesh... this may take a while.")
+	mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=10)
+	# vertices_to_remove = densities < np.quantile(densities, 0.1)
+	# mesh.remove_vertices_by_mask(vertices_to_remove)
+	# mesh = mesh.filter_smooth_taubin(number_of_iterations=50)
+	print("\033[A\033[A")
+	print("[bold green]:white_check_mark: Computing Mesh")
+	print("Saving Mesh...")
+	o3d.io.write_triangle_mesh(f"{task_path}poisson_mesh.ply", mesh)
+	print("\033[A\033[A")
+	print("[bold green]:white_check_mark: Saving Mesh")
+	
+
 if __name__ == "__main__":
 	args = parse_args()
 	if args.vr: # VR implies having the GUI running at the moment
 		args.gui = True
-
 	if args.mode:
 		print("Warning: the '--mode' argument is no longer in use. It has no effect. The mode is automatically chosen based on the scene.")
-
+	print('running testbed')
 	testbed = ngp.Testbed()
+	print('finished running testbed')
 	testbed.root_dir = ROOT_DIR
-
 	for file in args.files:
 		scene_info = get_scene(file)
 		if scene_info:
 			file = os.path.join(scene_info["data_dir"], scene_info["dataset"])
 		testbed.load_file(file)
-
 	if args.scene:
 		scene_info = get_scene(args.scene)
 		if scene_info is not None:
@@ -267,8 +298,16 @@ if __name__ == "__main__":
 
 	if args.save_mesh:
 		res = args.marching_cubes_res or 256
+		print('args.save_mesh ',args.save_mesh)
+		print('type args.save_mesh ',type(args.save_mesh))
 		print(f"Generating mesh via marching cubes and saving to {args.save_mesh}. Resolution=[{res},{res},{res}]")
 		testbed.compute_and_save_marching_cubes_mesh(args.save_mesh, [res, res, res])
+
+		poisson_mesh_file_path=str(f'{args.save_poisson_mesh}')
+		print('poisson_mesh_file_path ',poisson_mesh_file_path)
+		print('type poisson_mesh_file_path ',type(poisson_mesh_file_path))
+		testbed.compute_and_save_png_slices(poisson_mesh_file_path,256)
+		extract_and_save_poisson_mesh(args.save_poisson_mesh,args.save_mesh)
 
 	if ref_transforms:
 		testbed.fov_axis = 0
