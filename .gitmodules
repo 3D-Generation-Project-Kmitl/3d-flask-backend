@@ -1,3 +1,6 @@
 [submodule "DeblurGANv2"]
 	path = DeblurGANv2
 	url = https://github.com/VITA-Group/DeblurGANv2.git
+[submodule "instant-ngp"]
+	path = instant-ngp
+	url = https://github.com/NVlabs/instant-ngp.git
