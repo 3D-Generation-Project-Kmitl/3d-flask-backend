@@ -29,7 +29,7 @@ def generate3DModel(reconstruction_configs):
     else:
         use_google_arcore=True
 
-    camera_data=reconstruction_configs['camera_data']
+    camera_parameter_list=reconstruction_configs['camera_parameter_list']
     aabb_scale=4
     camera_model="PINHOLE"
     n_steps=500
@@ -51,10 +51,10 @@ def generate3DModel(reconstruction_configs):
 
         unZipImages(raw_data_path,images_path)
 
-        if camera_data is None or not use_google_arcore:
+        if camera_parameter_list is None or not use_google_arcore or camera_parameter_list==[]:
             do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite')
         else:
-            saveTransformJson(camera_data,transforms_file_path,images_path)
+            saveTransformJson(camera_parameter_list,transforms_file_path,images_path)
 
         if run_rembg:
             rembg_images_folder_path=folder_path+'images_png'
