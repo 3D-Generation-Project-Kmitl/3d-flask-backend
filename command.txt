@@ -11,7 +11,7 @@ https://drive.google.com/drive/folders/1lrDkQanWtTznf48FCaW5lX9ToRdNDF1a?usp=sha
 $ wget --no-check-certificate -r "https://drive.google.com/drive/folders/1lrDkQanWtTznf48FCaW5lX9ToRdNDF1a?usp=share_link
 " -O "lego.zip"
 
-python3 ../instant-ngp/scripts/crop-resize.py -s 800 800 --outputdir ../data/111_166/ ../data/111_166/images/0001.jpg
+python3 ../instant-ngp/scripts/crop-resize.py -s 720 1280 --outputdir ../src __pycache__/0001.jpg
 colmap automatic_reconstructor \
     --workspace_path data/111_179_colamp \
     --image_path data/111_179_colamp/images_png

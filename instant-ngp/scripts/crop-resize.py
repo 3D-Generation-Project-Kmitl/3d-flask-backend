@@ -15,6 +15,7 @@ from PIL import Image # $ sudo apt-get install python-imaging
 def crop_resize(image, size, ratio):
     # crop to ratio, center
     w, h = image.size
+    print('image.size ',image.size,'size ',size ,'w ',w,'h ',h)
     if w > ratio * h: # width is larger then necessary
         x, y = (w - ratio * h) // 2, 0
     else: # ratio*height >= width (height is larger)
@@ -22,15 +23,35 @@ def crop_resize(image, size, ratio):
     image = image.crop((x, y, w - x, h - y))
 
     # resize
-    print('image.size ',image.size,'size ',size )
+
 
     if list(image.size) > size: # don't stretch smaller images
         image.thumbnail(size, Image.ANTIALIAS)
     return image
 
+from PIL import Image, ExifTags
+
+def fix_orientation(img):
+    try:
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation]=='Orientation':
+                break
+        exif = dict(img._getexif().items())
+
+        if exif[orientation] == 3:
+            img = img.rotate(180, expand=True)
+        elif exif[orientation] == 6:
+            img = img.rotate(270, expand=True)
+        elif exif[orientation] == 8:
+            img = img.rotate(90, expand=True)
+    except (AttributeError, KeyError, IndexError):
+        # Ignore if orientation information is missing or invalid
+        pass
+    return img
+
 def crop_resize_mp(input_filename, outputdir, size, ratio):
     try:
-        image = crop_resize(Image.open(input_filename), size, ratio)
+        image = crop_resize(fix_orientation(Image.open(input_filename)), size, ratio)
 
         # save resized image
 

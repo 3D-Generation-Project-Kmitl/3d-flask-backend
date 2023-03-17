@@ -303,11 +303,11 @@ if __name__ == "__main__":
 		print(f"Generating mesh via marching cubes and saving to {args.save_mesh}. Resolution=[{res},{res},{res}]")
 		testbed.compute_and_save_marching_cubes_mesh(args.save_mesh, [res, res, res])
 
-		poisson_mesh_file_path=str(f'{args.save_poisson_mesh}')
-		print('poisson_mesh_file_path ',poisson_mesh_file_path)
-		print('type poisson_mesh_file_path ',type(poisson_mesh_file_path))
-		testbed.compute_and_save_png_slices(poisson_mesh_file_path,256)
-		extract_and_save_poisson_mesh(args.save_poisson_mesh,args.save_mesh)
+		# poisson_mesh_file_path=str(f'{args.save_poisson_mesh}')
+		# print('poisson_mesh_file_path ',poisson_mesh_file_path)
+		# print('type poisson_mesh_file_path ',type(poisson_mesh_file_path))
+		# testbed.compute_and_save_png_slices(poisson_mesh_file_path,256)
+		# extract_and_save_poisson_mesh(args.save_poisson_mesh,args.save_mesh)
 
 	if ref_transforms:
 		testbed.fov_axis = 0

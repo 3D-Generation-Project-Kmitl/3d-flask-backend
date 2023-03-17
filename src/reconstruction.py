@@ -35,7 +35,7 @@ def generate3DModel(reconstruction_configs):
     camera_parameter_list=reconstruction_configs['camera_parameter_list']
     aabb_scale=4
     camera_model="OPENCV"
-    n_steps=500
+    n_steps=1000
     base_folder_path='../'
 
     try:
@@ -58,18 +58,20 @@ def generate3DModel(reconstruction_configs):
             for filename in filenames:
                 do_system(f'python3 {instant_ngp_scripts_folder_path}crop-resize.py -s {IMAGE_WIDTH} {IMAGE_HEIGHT} --outputdir {images_path} {images_path}/{filename}')
 
-        
-
-
-        
 
         deblurganv2_folder_path=base_folder_path+'DeblurGANv2'
         do_system(f'python3 {deblurganv2_folder_path}/predict.py --weights_path {deblurganv2_folder_path}/pretrained_weights/fpn_inception.h5 --input_folder {images_path} --output_folder {images_path} --configs_path {deblurganv2_folder_path}/config/config.yaml')
         
+        
         if camera_parameter_list is None or not use_google_arcore or camera_parameter_list==[]:
-            do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite')
+            colmap_matcher='sequential'
+            do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite --colmap_matcher {colmap_matcher}')
+            if not os.path.exists(transforms_file_path):
+                colmap_matcher='exhaustive'
+                do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite --colmap_matcher {colmap_matcher}')
         else:
             saveTransformJson(camera_parameter_list,transforms_file_path,images_path)
+            replaceImageSize(transforms_file_path,IMAGE_WIDTH,IMAGE_HEIGHT)
 
 
         if run_rembg:
@@ -79,10 +81,9 @@ def generate3DModel(reconstruction_configs):
         else:
             replaceWordInTransformsJson_Not_REMBG(transforms_file_path)
         
-        # replaceImageSize(transforms_file_path,IMAGE_WIDTH,IMAGE_HEIGHT)
             
         run_instant_ngp_file_path=instant_ngp_scripts_folder_path+'run.py'
-        output_mesh_file_path=folder_path+f'{task_name}.obj'
+        output_mesh_file_path=folder_path+f'{task_name}.ply'
         model_snapshot_path=base_folder_path+'model_snapshot/saved_model.msgpack'
 
         do_system(f'python3 {run_instant_ngp_file_path} --scene {folder_path} --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path} --marching_cubes_res {marching_cubes_res} --save_poisson_mesh {folder_path}')
