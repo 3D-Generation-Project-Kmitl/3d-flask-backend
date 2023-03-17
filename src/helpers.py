@@ -270,14 +270,23 @@ def replaceWordInTransformsJson(transforms_file_path):
         data = file.read()
         data = re.sub(r"(?<=\")[^\"]*images", 'images_png', data)
         data =data.replace("jpg", "png")
+        data = re.sub(r"\"aabb_scale\": .*,", '', data)
     with open(transforms_file_path, 'w') as file:
         file.write(data)
 def replaceWordInTransformsJson_Not_REMBG(transforms_file_path):
     with open(transforms_file_path, 'r') as file:
         data = file.read()
         data = re.sub(r"(?<=\")[^\"]*images", 'images', data)
+        data = re.sub(r"\"aabb_scale\": .*,", '', data)
     with open(transforms_file_path, 'w') as file:
         file.write(data)
+def replaceImageSize(transforms_file_path,image_width,image_height):
+    with open(transforms_file_path, 'r') as file:
+        data = file.read()
+        data = re.sub(r"\"w\":.*,", f'\"w\":{image_width},', data)
+        data = re.sub(r"\"h\":.*,", f'\"h\":{image_height},', data)
+    with open(transforms_file_path, 'w') as file:
+        file.write(data)     
     
 def unZipImages(image_zip_path,images_path):
     with ZipFile(image_zip_path,'r') as zObject:
