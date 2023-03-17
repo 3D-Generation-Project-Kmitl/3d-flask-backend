@@ -1,0 +1,17 @@
+https://drive.google.com/drive/folders/1lrDkQanWtTznf48FCaW5lX9ToRdNDF1a?usp=share_link
+
+wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1lrDkQanWtTznf48FCaW5lX9ToRdNDF1a' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1lrDkQanWtTznf48FCaW5lX9ToRdNDF1a" -O lego && rm -rf /tmp/cookies.txt
+1lrDkQanWtTznf48FCaW5lX9ToRdNDF1a
+
+wget --no-check-certificate 'https://docs.google.com/uc?export=download&id=1lrDkQanWtTznf48FCaW5lX9ToRdNDF1a' -O lego
+
+
+https://drive.google.com/drive/folders/1lrDkQanWtTznf48FCaW5lX9ToRdNDF1a?usp=share_link
+
+$ wget --no-check-certificate -r "https://drive.google.com/drive/folders/1lrDkQanWtTznf48FCaW5lX9ToRdNDF1a?usp=share_link
+" -O "lego.zip"
+
+python3 ../instant-ngp/scripts/crop-resize.py -s 800 800 --outputdir ../data/111_166/ ../data/111_166/images/0001.jpg
+colmap automatic_reconstructor \
+    --workspace_path data/111_179_colamp \
+    --image_path data/111_179_colamp/images_png

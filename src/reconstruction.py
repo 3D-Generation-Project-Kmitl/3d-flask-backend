@@ -5,6 +5,8 @@ from helpers import *
 from constants import *
 from rq import Queue,Retry
 
+import open3d as o3d
+import trimesh
 
 
 
@@ -29,10 +31,10 @@ def generate3DModel(reconstruction_configs):
     else:
         use_google_arcore=True
 
-    camera_data=reconstruction_configs['camera_data']
+    camera_data=reconstruction_configs['camera_parameter_list']
     aabb_scale=4
-    camera_model="PINHOLE"
-    n_steps=1000
+    camera_model="OPENCV"
+    n_steps=500
     base_folder_path='../'
 
     try:
@@ -48,14 +50,22 @@ def generate3DModel(reconstruction_configs):
         colmap_db_file_path=folder_path+'colmap.db'
         colmap_text_folder_path=folder_path+'colmap_text'
 
-        images_path=f'{folder_path}/images'
+        images_path=f'{folder_path}images'
 
         unZipImages(raw_data_path,images_path)
+        for filepath,dirnames,filenames in os.walk(images_path):
+            for filename in filenames:
+                do_system(f'python3 {instant_ngp_scripts_folder_path}crop-resize.py -s {IMAGE_WIDTH} {IMAGE_HEIGHT} --outputdir {images_path} {images_path}/{filename}')
 
+
+        deblurganv2_folder_path=base_folder_path+'DeblurGANv2'
+        do_system(f'python3 {deblurganv2_folder_path}/predict.py --weights_path {deblurganv2_folder_path}/pretrained_weights/fpn_inception.h5 --input_folder {images_path} --output_folder {images_path} --configs_path {deblurganv2_folder_path}/config/config.yaml')
+        
         if camera_data is None or not use_google_arcore:
             do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite')
         else:
             saveTransformJson(camera_data,transforms_file_path,images_path)
+
 
         if run_rembg:
             rembg_images_folder_path=folder_path+'images_png'
@@ -63,12 +73,29 @@ def generate3DModel(reconstruction_configs):
             replaceWordInTransformsJson(transforms_file_path)
         else:
             replaceWordInTransformsJson_Not_REMBG(transforms_file_path)
+        
+        # replaceImageSize(transforms_file_path,IMAGE_WIDTH,IMAGE_HEIGHT)
             
         run_instant_ngp_file_path=instant_ngp_scripts_folder_path+'run.py'
-        output_mesh_file_path=folder_path+f'{task_name}.ply'
+        output_mesh_file_path=folder_path+f'{task_name}.obj'
         model_snapshot_path=base_folder_path+'model_snapshot/saved_model.msgpack'
 
         do_system(f'python3 {run_instant_ngp_file_path} --scene {folder_path} --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path} --marching_cubes_res {marching_cubes_res} --save_poisson_mesh {folder_path}')
+       
+        
+        mesh=o3d.io.read_triangle_mesh(output_mesh_file_path)
+        no_colored_mesh = o3d.geometry.TriangleMesh()
+        # Get the vertex and face data
+        vertices = mesh.vertices
+        faces = mesh.triangles
+
+        # Create new face data with vertex indices, texture coordinate indices, and normal indices
+
+            
+        no_colored_mesh.vertices=vertices
+        # Replace the mesh face data with the new data
+        no_colored_mesh.triangles =faces
+        o3d.io.write_triangle_mesh(folder_path+'no-color-mesh.obj', no_colored_mesh)
 
         scene = a3d.Scene.from_file(output_mesh_file_path)
         file_storage_url=os.getenv('FILE_STORAGE_URL')
