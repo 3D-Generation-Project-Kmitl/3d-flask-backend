@@ -16,7 +16,7 @@ def count_words(text):
 
 def generate3DModel(reconstruction_configs):
 
-    # waitWhenGPUMemoryLow()
+    waitWhenGPUMemoryLow()
     print('hello from generate3DModel', file=sys.stderr)
     print('reconstruction_configs',reconstruction_configs, file=sys.stderr)
     raw_data_path='.'+reconstruction_configs['raw_data_path']
@@ -34,7 +34,7 @@ def generate3DModel(reconstruction_configs):
 
     camera_parameter_list=reconstruction_configs['camera_parameter_list']
     aabb_scale=4
-    camera_model="OPENCV"
+    camera_model="PINHOLE"
     n_steps=1000
     base_folder_path='../'
 
@@ -94,12 +94,14 @@ def generate3DModel(reconstruction_configs):
         scene.save(f'{folder_path}{task_name}.glb')
         sendRequestToUpdate3DModel(model_id,output_mesh_file_path_glb)
 
-        # do_system(f'rm {images_path} -r')
         return output_mesh_file_path_glb
     except Exception as e:
-        # do_system(f'rm {images_path} -r')
         print(e)
+        print('sendRequestForFailed3DModel runnning')
+        print('model_id ',model_id)
+        sendRequestForFailed3DModel(model_id)
         return e
+    
 def sendRequestToUpdate3DModel(model_id,model_url):
     print('sendRequestToUpdate3DModel',file=sys.stderr)
     model_id=int(model_id)
@@ -107,4 +109,12 @@ def sendRequestToUpdate3DModel(model_id,model_url):
     r = requests.put(f'{PURECHOO_BACKEND_URL}/model/reconstruction', json ={'modelId':model_id
                                                         ,'model':model_url
                                                         })
+    
+def sendRequestForFailed3DModel(model_id):
+    model_id=int(model_id)
+    r = requests.put(f'{PURECHOO_BACKEND_URL}/model/reconstruction', json ={'modelId':model_id
+                                                        ,'status':'FAILED'
+                                                        })
+    print('reponse from 3d backend ',str(r))
+
 
