@@ -15,3 +15,5 @@ python3 ../instant-ngp/scripts/crop-resize.py -s 720 1280 --outputdir ../src __p
 colmap automatic_reconstructor \
     --workspace_path data/111_179_colamp \
     --image_path data/111_179_colamp/images_png
+
+python3 ../instant-ngp/scripts/crop-resize.py --outputdir __pycache__/ 0000.jpg  

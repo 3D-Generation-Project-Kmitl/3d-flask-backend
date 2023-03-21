@@ -19,7 +19,7 @@ app=Flask(__name__,static_folder="../data")
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
-q = Queue(connection=r)
+q = Queue(QUEUE_NAME,connection=r)
 
 @app.route('/hello',methods = ['GET'])
 def get():

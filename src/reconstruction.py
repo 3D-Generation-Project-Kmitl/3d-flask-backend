@@ -5,18 +5,18 @@ from helpers import *
 from constants import *
 from rq import Queue,Retry
 import open3d as o3d
-
+import redis
 import open3d as o3d
 import trimesh
 
 
 
-def count_words(text):    
-    return len(text)
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
+q = Queue(QUEUE_NAME,connection=r)
 
 def generate3DModel(reconstruction_configs):
 
-    waitWhenGPUMemoryLow()
+    
     print('hello from generate3DModel', file=sys.stderr)
     print('reconstruction_configs',reconstruction_configs, file=sys.stderr)
     raw_data_path='.'+reconstruction_configs['raw_data_path']
@@ -35,13 +35,26 @@ def generate3DModel(reconstruction_configs):
     camera_parameter_list=reconstruction_configs['camera_parameter_list']
     aabb_scale=4
     camera_model="PINHOLE"
-    n_steps=1000
+    n_steps=800
     base_folder_path='../'
+
+    shouldRequeue=waitWhenGPUMemoryLow(marching_cubes_res)
+    if shouldRequeue:
+        job = q.enqueue(
+        generate3DModel
+        , args=[reconstruction_configs]
+        ,job_timeout='1h'
+        # ,retry=Retry(max=FAILED_JOBS_RETRY)
+        )
+        return "Requeued this job"
 
     try:
         task_name=f'{user_id}_{model_id}'
         folder_path=f'{base_folder_path}data/{task_name}/'
         if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        else:
+            do_system(f'rm -r {folder_path}')
             os.mkdir(folder_path)
 
         transforms_file_path=folder_path+'transforms.json'

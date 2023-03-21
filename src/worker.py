@@ -3,8 +3,9 @@ import os
 import redis
 from rq import Worker, Queue, Connection
 from app import app
+from constants import *
 
-listen = ['default']
+listen = [QUEUE_NAME]
 
 redis_url = os.getenv('REDIS_URL','redis://redis:6379')
 

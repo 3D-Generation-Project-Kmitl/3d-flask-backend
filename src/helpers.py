@@ -13,8 +13,19 @@ import trimesh
 from pyquaternion import Quaternion
 
 
-def waitWhenGPUMemoryLow():
+def waitWhenGPUMemoryLow(res):
+    GPU_MEMORY_THRESHOLD=10000
+    if res==LOW_MARCHING_CUBES_RES:
+        GPU_MEMORY_THRESHOLD=LOW_GPU_MEMORY_THRESHOLD
+    elif res==MEDIUM_MARCHING_CUBES_RES:
+        GPU_MEMORY_THRESHOLD=MEDIUM_GPU_MEMORY_THRESHOLD
+    else:
+        GPU_MEMORY_THRESHOLD=HIGH_GPU_MEMORY_THRESHOLD
+    print('GPU_MEMORY_THRESHOLD: ',GPU_MEMORY_THRESHOLD)
+    waiting_times=0
     while True:
+        if waiting_times>2:
+             return True
         # Get all available GPUs
         gpus = GPUtil.getGPUs()
         if len(gpus) > 0:
@@ -22,11 +33,14 @@ def waitWhenGPUMemoryLow():
             gpus = sorted(gpus, key=lambda gpu: gpu.memoryFree, reverse=True)
             # Check available memory of the first GPU
             gpu = gpus[0]
-            if gpu.memoryFree < GPU_MEMORY_THRESHOLD:  # 20 GB in MB
+            print(f'{gpu.memoryFree} < {GPU_MEMORY_THRESHOLD} ',gpu.memoryFree < GPU_MEMORY_THRESHOLD)
+            if gpu.memoryFree < GPU_MEMORY_THRESHOLD:
                 print(f"Waiting for GPU {gpu.id}... Memory: {gpu.memoryFree} MB")
                 time.sleep(60)  # Wait for 1 minute
+                waiting_times+=1
             else:
                 print(f"GPU {gpu.id} ready! Memory: {gpu.memoryFree} MB")
+                waiting_times=0
                 break  # Exit the loop when the GPU has enough memory
 def rotmat(a, b):
 	a, b = a / np.linalg.norm(a), b / np.linalg.norm(b)
