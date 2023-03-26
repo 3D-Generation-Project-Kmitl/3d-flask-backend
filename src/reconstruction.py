@@ -23,22 +23,25 @@ def generate3DModel(reconstruction_configs):
     user_id=str(reconstruction_configs['user_id'])
     model_id=str(reconstruction_configs['model_id'])
     marching_cubes_res=getMarchingCubesRes(reconstruction_configs['quality'])
+
     if reconstruction_configs['object_detection']=='false':
         run_rembg=False
+        aabb_scale=8
     else:
         run_rembg=True
+        aabb_scale=1
+
     if reconstruction_configs['google_ARCore']=='false':
         use_google_arcore=False
     else:
         use_google_arcore=True
 
     camera_parameter_list=reconstruction_configs['camera_parameter_list']
-    aabb_scale=4
     camera_model="PINHOLE"
     n_steps=800
     base_folder_path='../'
 
-    shouldRequeue=waitWhenGPUMemoryLow(marching_cubes_res)
+    shouldRequeue,gpuId=waitWhenGPUMemoryLow(marching_cubes_res)
     if shouldRequeue:
         job = q.enqueue(
         generate3DModel
@@ -47,7 +50,8 @@ def generate3DModel(reconstruction_configs):
         # ,retry=Retry(max=FAILED_JOBS_RETRY)
         )
         return "Requeued this job"
-
+    gpuId=str(gpuId)
+    os.environ["CUDA_VISIBLE_DEVICES"]=gpuId
     try:
         task_name=f'{user_id}_{model_id}'
         folder_path=f'{base_folder_path}data/{task_name}/'
@@ -69,19 +73,20 @@ def generate3DModel(reconstruction_configs):
         unZipImages(raw_data_path,images_path)
         for filepath,dirnames,filenames in os.walk(images_path):
             for filename in filenames:
-                do_system(f'python3 {instant_ngp_scripts_folder_path}crop-resize.py -s {IMAGE_WIDTH} {IMAGE_HEIGHT} --outputdir {images_path} {images_path}/{filename}')
+                do_system(f'CUDA_VISIBLE_DEVICES={gpuId} python3 {instant_ngp_scripts_folder_path}crop-resize.py -s {IMAGE_WIDTH} {IMAGE_HEIGHT} --outputdir {images_path} {images_path}/{filename}')
 
 
         deblurganv2_folder_path=base_folder_path+'DeblurGANv2'
-        do_system(f'python3 {deblurganv2_folder_path}/predict.py --weights_path {deblurganv2_folder_path}/pretrained_weights/fpn_inception.h5 --input_folder {images_path} --output_folder {images_path} --configs_path {deblurganv2_folder_path}/config/config.yaml')
+        do_system(f'CUDA_VISIBLE_DEVICES={gpuId} python3 {deblurganv2_folder_path}/predict.py --weights_path {deblurganv2_folder_path}/pretrained_weights/fpn_inception.h5 --input_folder {images_path} --output_folder {images_path} --configs_path {deblurganv2_folder_path}/config/config.yaml')
         
+
         
         if camera_parameter_list is None or not use_google_arcore or camera_parameter_list==[]:
             colmap_matcher='sequential'
-            do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite --colmap_matcher {colmap_matcher}')
+            do_system(f'CUDA_VISIBLE_DEVICES={gpuId} python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite --colmap_matcher {colmap_matcher}')
             if not os.path.exists(transforms_file_path):
                 colmap_matcher='exhaustive'
-                do_system(f'python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite --colmap_matcher {colmap_matcher}')
+                do_system(f'CUDA_VISIBLE_DEVICES={gpuId} python3 {colmap2nerf_file_path} --images {images_path} --run_colmap --out {transforms_file_path} --aabb_scale {aabb_scale} --colmap_camera_model {colmap_camera_model} --colmap_db {colmap_db_file_path} --text {colmap_text_folder_path} --overwrite --colmap_matcher {colmap_matcher}')
         else:
             saveTransformJson(camera_parameter_list,transforms_file_path,images_path)
             replaceImageSize(transforms_file_path,IMAGE_WIDTH,IMAGE_HEIGHT)
@@ -92,6 +97,7 @@ def generate3DModel(reconstruction_configs):
             do_system(f'rembg p {images_path} {rembg_images_folder_path}')
             replaceWordInTransformsJson(transforms_file_path)
         else:
+
             replaceWordInTransformsJson_Not_REMBG(transforms_file_path)
         
             
@@ -99,7 +105,7 @@ def generate3DModel(reconstruction_configs):
         output_mesh_file_path=folder_path+f'{task_name}.ply'
         model_snapshot_path=base_folder_path+'model_snapshot/saved_model.msgpack'
 
-        do_system(f'python3 {run_instant_ngp_file_path} --scene {folder_path} --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path} --marching_cubes_res {marching_cubes_res} --save_poisson_mesh {folder_path}')
+        do_system(f'CUDA_VISIBLE_DEVICES={gpuId} python3 {run_instant_ngp_file_path} --scene {folder_path} --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path} --marching_cubes_res {marching_cubes_res} --save_poisson_mesh {folder_path}')
         
         scene = a3d.Scene.from_file(output_mesh_file_path)
         file_storage_url=os.getenv('FILE_STORAGE_URL')

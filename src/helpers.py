@@ -25,7 +25,7 @@ def waitWhenGPUMemoryLow(res):
     waiting_times=0
     while True:
         if waiting_times>2:
-             return True
+             return True,0
         # Get all available GPUs
         gpus = GPUtil.getGPUs()
         if len(gpus) > 0:
@@ -42,6 +42,8 @@ def waitWhenGPUMemoryLow(res):
                 print(f"GPU {gpu.id} ready! Memory: {gpu.memoryFree} MB")
                 waiting_times=0
                 break  # Exit the loop when the GPU has enough memory
+    return False,gpu.id
+
 def rotmat(a, b):
 	a, b = a / np.linalg.norm(a), b / np.linalg.norm(b)
 	v = np.cross(a, b)
@@ -293,14 +295,14 @@ def replaceWordInTransformsJson(transforms_file_path):
         data = file.read()
         data = re.sub(r"(?<=\")[^\"]*images", 'images_png', data)
         data =data.replace("jpg", "png")
-        data = re.sub(r"\"aabb_scale\": .*,", '', data)
+        # data = re.sub(r"\"aabb_scale\": .*,", '', data)
     with open(transforms_file_path, 'w') as file:
         file.write(data)
 def replaceWordInTransformsJson_Not_REMBG(transforms_file_path):
     with open(transforms_file_path, 'r') as file:
         data = file.read()
         data = re.sub(r"(?<=\")[^\"]*images", 'images', data)
-        data = re.sub(r"\"aabb_scale\": .*,", '', data)
+        # data = re.sub(r"\"aabb_scale\": .*,", '', data)
     with open(transforms_file_path, 'w') as file:
         file.write(data)
 def replaceImageSize(transforms_file_path,image_width,image_height):
