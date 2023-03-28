@@ -26,7 +26,7 @@ def generate3DModel(reconstruction_configs):
 
     if reconstruction_configs['object_detection']=='false':
         run_rembg=False
-        aabb_scale=8
+        aabb_scale=16
     else:
         run_rembg=True
         aabb_scale=1
@@ -52,6 +52,8 @@ def generate3DModel(reconstruction_configs):
         return "Requeued this job"
     gpuId=str(gpuId)
     os.environ["CUDA_VISIBLE_DEVICES"]=gpuId
+    do_system(f'export CUDA_VISIBLE_DEVICES={gpuId}')
+    print('gpuId: ',gpuId)
     try:
         task_name=f'{user_id}_{model_id}'
         folder_path=f'{base_folder_path}data/{task_name}/'
@@ -102,7 +104,7 @@ def generate3DModel(reconstruction_configs):
         
             
         run_instant_ngp_file_path=instant_ngp_scripts_folder_path+'run.py'
-        output_mesh_file_path=folder_path+f'{task_name}.ply'
+        output_mesh_file_path=folder_path+f'{task_name}.obj'
         model_snapshot_path=base_folder_path+'model_snapshot/saved_model.msgpack'
 
         do_system(f'CUDA_VISIBLE_DEVICES={gpuId} python3 {run_instant_ngp_file_path} --scene {folder_path} --save_mesh {output_mesh_file_path} --n_steps {n_steps} --save_snapshot {model_snapshot_path} --marching_cubes_res {marching_cubes_res} --save_poisson_mesh {folder_path}')
