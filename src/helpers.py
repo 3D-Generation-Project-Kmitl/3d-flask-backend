@@ -43,7 +43,19 @@ def waitWhenGPUMemoryLow(res):
                 waiting_times=0
                 break  # Exit the loop when the GPU has enough memory
     return False,gpu.id
-
+def haveOnlyOneImageResolution(images_path):
+    images_resolution_set=set()
+    for filename in os.listdir(images_path):
+        if(filename.lower().endswith(('.png', '.jpg', '.jpeg'))):
+            print(f'{images_path}/{filename}')
+            image = cv2.imread(f'{images_path}/{filename}')
+            if image is not None:
+                #using shape property to get the dimensions of the image
+                resolution = (image.shape[0],image.shape[1])
+                images_resolution_set.add(resolution)
+                if len(images_resolution_set)>1:
+                     return False
+    return True
 def rotmat(a, b):
 	a, b = a / np.linalg.norm(a), b / np.linalg.norm(b)
 	v = np.cross(a, b)
