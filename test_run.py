@@ -6,10 +6,10 @@ def do_system(arg):
     err = os.system(arg)
     if err:
         print("FATAL: command failed")
-task_name='4_37_video'
+task_name='4_37_render_aabb_scale_offset'
 run_instant_ngp_file_path='./instant-ngp/scripts/run.py'
 folder_path=f'./data/{task_name}/'
-video_camera_path=f'{folder_path}transforms.json'
+video_camera_path=f'{folder_path}base_cam.json'
 video_output=f'{folder_path}{task_name}.mp4'
 output_mesh_file_path=f'{folder_path}{task_name}.ply'
 n_steps=500
