@@ -17,3 +17,9 @@ colmap automatic_reconstructor \
     --image_path data/111_179_colamp/images_png
 
 python3 ../instant-ngp/scripts/crop-resize.py --outputdir __pycache__/ 0000.jpg  
+
+python3 ../instant-ngp/scripts/run.py \
+--scene ../data/111_141_obj \
+--save_mesh ../data/111_141_obj/111_141_obj.obj \
+--n_steps 500 \
+--marching_cubes_res 256

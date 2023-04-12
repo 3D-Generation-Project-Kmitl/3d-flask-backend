@@ -51,8 +51,11 @@ def haveOnlyOneImageResolution(images_path):
             image = cv2.imread(f'{images_path}/{filename}')
             if image is not None:
                 #using shape property to get the dimensions of the image
+                
                 resolution = (image.shape[0],image.shape[1])
+                print('resolution ',resolution)
                 images_resolution_set.add(resolution)
+                print('images_resolution_set ',images_resolution_set)
                 if len(images_resolution_set)>1:
                      return False
     return True
