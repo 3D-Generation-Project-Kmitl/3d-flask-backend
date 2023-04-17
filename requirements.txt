@@ -22,3 +22,4 @@ pyrender
 scikit-image
 open3d
 pyquaternion
+pymeshlab

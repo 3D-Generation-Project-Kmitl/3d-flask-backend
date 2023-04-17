@@ -8,6 +8,7 @@ import open3d as o3d
 import redis
 import open3d as o3d
 import trimesh
+import pymeshlab
 
 
 
@@ -92,6 +93,8 @@ def generate3DModel(reconstruction_configs):
                   --input_folder {images_path} \
                   --output_folder {images_path} \
                   --configs_path {deblurganv2_folder_path}/config/config.yaml')
+        r=sendRequestToRestoreImage(images_path)
+        print(r)
 
 
         if camera_parameter_list is None or not use_google_arcore or camera_parameter_list==[]:
@@ -149,18 +152,55 @@ def generate3DModel(reconstruction_configs):
                   --marching_cubes_res {marching_cubes_res}')
                 #   --load_snapshot {model_snapshot_path} \
 
-        scene = a3d.Scene.from_file(output_mesh_file_path)
+
+        # pcd = o3d.io.read_point_cloud(output_mesh_file_path)
+        mesh_name=f'{task_name}_pymeshlab.ply'
+        mesh_ply_path=folder_path+f'{mesh_name}.ply'
+        mesh_glb_path=folder_path+f'{mesh_name}.glb'
+        texture_res_threshold=65536
+        texture_res=4096
+        texture_dimension=4096
+        ms = pymeshlab.MeshSet()
+        ms.load_new_mesh(output_mesh_file_path)
+        # scene = a3d.Scene.from_file(input_poisson_mesh)
+        # scene.save(output_mesh_file_path_glb)
+
+        while texture_res<texture_res_threshold:
+            try:
+                ms.compute_texcoord_parametrization_triangle_trivial_per_wedge(textdim=texture_dimension)
+
+                # # create texture using UV map and vertex colors
+                ms.compute_texmap_from_color(textname=f'{task_name}_pymeshlab',textw=texture_res,texth=texture_res) # textname will be filename of a png, should not be a full path
+                # texture file won't be saved until you save the mesh
+                ms.save_current_mesh(mesh_ply_path)
+                scene = a3d.Scene.from_file(mesh_ply_path)
+                scene.save(mesh_glb_path)
+                break
+            except Exception as e:
+                print('error message ',e)
+                print('texture_res ',texture_res)
+                print('texture_dimension ',texture_dimension)
+                texture_res*=2
+                texture_dimension*=2
+        # surface_mesh, _ = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd)
+        # o3d.io.write_triangle_mesh(output_mesh_file_path_glb,surface_mesh)
+        # o3d.io.write_triangle_mesh(output_mesh_file_path_ply,surface_mesh)
+
+        # scene = a3d.Scene.from_file(output_mesh_file_path)
+
+        
+        # scene.save(f'{folder_path}{task_name}.glb')
         file_storage_url=os.getenv('FILE_STORAGE_URL')
-        output_mesh_file_path_glb=f'{file_storage_url}/{task_name}/{task_name}.glb'
-        scene.save(f'{folder_path}{task_name}.glb')
+        output_mesh_file_path_glb=f'{file_storage_url}/{task_name}/{mesh_name}.glb'
         sendRequestToUpdate3DModel(model_id,output_mesh_file_path_glb)
 
         return output_mesh_file_path_glb
+        return 'hello'
     except Exception as e:
         print(e)
         print('sendRequestForFailed3DModel runnning')
         print('model_id ',model_id)
-        sendRequestForFailed3DModel(model_id)
+        # sendRequestForFailed3DModel(model_id)
         return e
     
 def sendRequestToUpdate3DModel(model_id,model_url):
@@ -177,5 +217,11 @@ def sendRequestForFailed3DModel(model_id):
                                                         ,'status':'FAILED'
                                                         })
     print('reponse from 3d backend ',str(r))
+
+def sendRequestToRestoreImage(images_path):
+    print('sendRequestToRestoreImage',file=sys.stderr)
+    r = requests.post(f'http://devcontainer-real-esrgan-1:5000/imageRestoration', json ={'images_path':images_path
+                                                        })
+    return r
 
 

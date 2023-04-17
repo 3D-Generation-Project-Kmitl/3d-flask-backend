@@ -4,3 +4,6 @@
 [submodule "instant-ngp"]
 	path = instant-ngp
 	url = https://github.com/pholpaphankorn/instant-ngp.git
+[submodule "Real-ESRGAN"]
+	path = Real-ESRGAN
+	url = https://github.com/pholpaphankorn/Real-ESRGAN.git

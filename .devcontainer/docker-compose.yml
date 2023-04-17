@@ -65,8 +65,6 @@ services:
     env_file:
         - ../.env
     command: python3 worker.py
-    links:
-        - redis
     restart: unless-stopped
 
   redis:
@@ -87,8 +85,29 @@ services:
     env_file:
         - ../.env
     command: python3 ./src/app.py
-    links:
-        - redis
     ports:
       - ${FLASK_PORT}:${FLASK_PORT}
+    restart: unless-stopped
+
+  real-esrgan:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile_real_esrgan
+    stdin_open: true
+    tty: true
+    environment:
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility,graphics
+    volumes:
+      - ../:/volume
+    working_dir: /volume/Real-ESRGAN
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+    depends_on:
+        - instant-ngp-worker
+    command: bash -c "python3 setup.py develop && python3 ./src/app.py"
     restart: unless-stopped
