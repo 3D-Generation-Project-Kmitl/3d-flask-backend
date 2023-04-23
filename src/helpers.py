@@ -11,6 +11,10 @@ import numpy as np
 import pyrender
 import trimesh
 from pyquaternion import Quaternion
+import numpy as np
+import open3d as o3d
+import pyvista as pv
+import pymeshlab
 
 
 def waitWhenGPUMemoryLow(res):
@@ -59,6 +63,31 @@ def haveOnlyOneImageResolution(images_path):
                 if len(images_resolution_set)>1:
                      return False
     return True
+def clean_point_cloud(task_path,point_cloud_name):
+    file_path=f'{task_path}/{point_cloud_name}.ply'
+
+    scaled_remove_outlier_file_path=f'{task_path}/{point_cloud_name}__scaled_remove_outlier.ply'
+
+
+    ply_mesh_output_file_path=f'{task_path}/{point_cloud_name}_mesh_output.ply'
+
+    original_point_cloud_o3d=o3d.io.read_point_cloud(file_path)
+
+    original_point_cloud_o3d_remove_outlier,_=original_point_cloud_o3d.remove_radius_outlier(nb_points=16, radius=0.05)
+    scaled_original_point_cloud_o3d_remove_outlier=original_point_cloud_o3d_remove_outlier.scale(0.2,original_point_cloud_o3d_remove_outlier.get_center())
+    o3d.io.write_point_cloud(scaled_remove_outlier_file_path,scaled_original_point_cloud_o3d_remove_outlier)
+
+
+    ms = pymeshlab.MeshSet()
+    ms.load_new_mesh(scaled_remove_outlier_file_path)
+    ms.apply_normal_point_cloud_smoothing(k=10)
+    ms.generate_surface_reconstruction_screened_poisson(preclean=True,depth=9)
+    ms.apply_coord_two_steps_smoothing(stepsmoothnum=2)
+    # ms.apply_coord_taubin_smoothing(stepsmoothnum=10)
+    ms.save_current_mesh(ply_mesh_output_file_path)
+
+
+    return ply_mesh_output_file_path
 def rotmat(a, b):
 	a, b = a / np.linalg.norm(a), b / np.linalg.norm(b)
 	v = np.cross(a, b)
