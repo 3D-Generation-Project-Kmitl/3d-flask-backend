@@ -23,7 +23,7 @@ def generate3DModel(reconstruction_configs):
     raw_data_path='.'+reconstruction_configs['raw_data_path']
     user_id=str(reconstruction_configs['user_id'])
     model_id=str(reconstruction_configs['model_id'])
-    marching_cubes_res=getMarchingCubesRes(reconstruction_configs['quality'])
+    marching_cubes_res,remove_inner_iters,poisson_depth=getMarchingCubesRes(reconstruction_configs['quality'])
 
 
     if reconstruction_configs['object_detection']=='false':
@@ -40,7 +40,7 @@ def generate3DModel(reconstruction_configs):
 
     camera_parameter_list=reconstruction_configs['camera_parameter_list']
     camera_model="PINHOLE"
-    n_steps=500
+    n_steps=1000
     base_folder_path='../'
 
     shouldRequeue,gpuId=waitWhenGPUMemoryLow(marching_cubes_res)
@@ -130,8 +130,8 @@ def generate3DModel(reconstruction_configs):
             rembg_images_folder_path=folder_path+'images_png'
             rembg_mask_folder_path=folder_path+'masks'
             do_system(f'rembg p -m u2net {images_path} {rembg_images_folder_path}')
-            os.mkdir(rembg_mask_folder_path)
-            do_system(f'rembg p -om -m u2net {images_path} {rembg_mask_folder_path}')
+            # os.mkdir(rembg_mask_folder_path)
+            # do_system(f'rembg p -om -m u2net {images_path} {rembg_mask_folder_path}')
             # for filename in os.listdir(images_path):
             #     if(filename.lower().endswith(('.png', '.jpg', '.jpeg'))):
             #         do_system(f'rembg i -om {images_path}/{filename} {rembg_mask_folder_path}/{filename}')
@@ -150,48 +150,93 @@ def generate3DModel(reconstruction_configs):
                   --n_steps {n_steps} \
                   --save_snapshot {model_snapshot_path} \
                   --marching_cubes_res {marching_cubes_res}')
-                #   --load_snapshot {model_snapshot_path} \
+        # texture_res_threshold=65536
+        # texture_res=4096
+        # texture_dimension=4096
+        # ms = pymeshlab.MeshSet()
+        # ms.load_new_mesh(output_mesh_file_path)
+        # while texture_res<texture_res_threshold:
+        #     try:
+        #         mesh_name=f'{task_name}_pymeshlab_{texture_res}'
+        #         mesh_ply_path=folder_path+f'{mesh_name}.ply'
+        #         mesh_glb_path=folder_path+f'{mesh_name}.glb'
+        #         ms.compute_texcoord_parametrization_triangle_trivial_per_wedge(textdim=texture_dimension)
+        #         # # create texture using UV map and vertex colors
+        #         ms.compute_texmap_from_color(textname=f'{task_name}_pymeshlab',textw=texture_res,texth=texture_res) # textname will be filename of a png, should not be a full path
+        #         # texture file won't be saved until you save the mesh
+        #         ms.save_current_mesh(mesh_ply_path)
+        #         # original_mesh=o3d.io.read_triangle_mesh(mesh_ply_path)
+        #         # scaled_mesh=original_mesh.scale(0.2,original_mesh.get_center())
+        #         # o3d.io.write_triangle_mesh(mesh_ply_path,scaled_mesh)
+        #         # o3d.io.write_triangle_mesh(mesh_glb_path,scaled_mesh)
+        #         break
+        #     except Exception as e:
+        #         print('error message ',e)
+        #         print('texture_res ',texture_res)
+        #         print('texture_dimension ',texture_dimension)
+        #         texture_res*=2
+        #         texture_dimension*=2
+        output_mesh_name=f'{task_name}_final'
+        if aabb_scale!=16:
+            run_post_process_file_path=f'{instant_ngp_scripts_folder_path}post_process_data.py'
+            do_system(f'CUDA_VISIBLE_DEVICES={gpuId} \
+                  python3 {run_post_process_file_path} \
+                    --task_path {folder_path} \
+                    --input_file_name {task_name} \
+                    --output_file_name {output_mesh_name} \
+                    --remove_inner_iters {remove_inner_iters} \
+                    --depth {poisson_depth}')
+            
+        
+        if(not os.path.exists(f'{folder_path}{output_mesh_name}.glb')):
+            output_mesh_name=f'{task_name}'
+            try:
+                if(not os.path.exists(f'{folder_path}{output_mesh_name}.ply')):
+                    sendRequestForFailed3DModel(model_id)
+                    return
+                # mesh=o3d.io.read_triangle_mesh(f'{folder_path}{output_mesh_name}.ply')
+                # print('failed on post process, trying to save original mesh')
+                # o3d.io.write_triangle_mesh(f'{folder_path}{output_mesh_name}.glb',mesh)
+                texture_res_threshold=65536
+                texture_res=2048
+                texture_dimension=2048
+                ms = pymeshlab.MeshSet()
+                ms.load_new_mesh(f'{folder_path}{output_mesh_name}.ply')
 
-        mesh_name=None
-        if reconstruction_configs['quality']=='High':
-            mesh_name=f'{task_name}_High'
-            cleaned_mesh_path=clean_point_cloud(folder_path,task_name)
-            o3d.io.write_triangle_mesh(f'{folder_path}{mesh_name}.glb', cleaned_mesh_path)
-        else:
+                while texture_res<texture_res_threshold:
+                    try:
+                        output_mesh_name=f'{task_name}_pymeshlab_{texture_res}'
+                        mesh_ply_path=folder_path+f'{output_mesh_name}.ply'
+                        mesh_glb_path=folder_path+f'{output_mesh_name}.glb'
+                        ms.compute_texcoord_parametrization_triangle_trivial_per_wedge(textdim=texture_dimension)
 
-            texture_res_threshold=65536
-            texture_res=4096
-            texture_dimension=4096
-            ms = pymeshlab.MeshSet()
-            ms.load_new_mesh(output_mesh_file_path)
+                        # # create texture using UV map and vertex colors
+                        ms.compute_texmap_from_color(textname=f'{task_name}_pymeshlab',textw=texture_res,texth=texture_res) # textname will be filename of a png, should not be a full path
+                        # texture file won't be saved until you save the mesh
+                        ms.save_current_mesh(mesh_ply_path)
 
-            while texture_res<texture_res_threshold:
-                try:
-                    mesh_name=f'{task_name}_pymeshlab_{texture_res}'
-                    mesh_ply_path=folder_path+f'{mesh_name}.ply'
-                    mesh_glb_path=folder_path+f'{mesh_name}.glb'
-                    ms.compute_texcoord_parametrization_triangle_trivial_per_wedge(textdim=texture_dimension)
+                        original_mesh=o3d.io.read_triangle_mesh(mesh_ply_path)
+                        scaled_mesh=original_mesh.scale(0.2,original_mesh.get_center())
+                        o3d.io.write_triangle_mesh(mesh_ply_path,scaled_mesh)
+                        o3d.io.write_triangle_mesh(mesh_glb_path,scaled_mesh)
+                        break
+                    except Exception as e:
+                        print('error message ',e)
+                        print('texture_res ',texture_res)
+                        print('texture_dimension ',texture_dimension)
+                        texture_res*=2
+                        texture_dimension*=2
+            except Exception as e:
+                print('error message ',e)
+                print('failed on save original mesh')
+                sendRequestForFailed3DModel(model_id)
+                return
 
-                    # # create texture using UV map and vertex colors
-                    ms.compute_texmap_from_color(textname=f'{task_name}_pymeshlab',textw=texture_res,texth=texture_res) # textname will be filename of a png, should not be a full path
-                    # texture file won't be saved until you save the mesh
-                    ms.save_current_mesh(mesh_ply_path)
-
-                    original_mesh=o3d.io.read_triangle_mesh(mesh_ply_path)
-                    scaled_mesh=original_mesh.scale(0.2,original_mesh.get_center())
-                    o3d.io.write_triangle_mesh(mesh_ply_path,scaled_mesh)
-                    o3d.io.write_triangle_mesh(mesh_glb_path,scaled_mesh)
-                    break
-                except Exception as e:
-                    print('error message ',e)
-                    print('texture_res ',texture_res)
-                    print('texture_dimension ',texture_dimension)
-                    texture_res*=2
-                    texture_dimension*=2
 
 
         file_storage_url=os.getenv('FILE_STORAGE_URL')
-        output_mesh_file_path_glb=f'{file_storage_url}/{task_name}/{mesh_name}.glb'
+        output_mesh_file_path_glb=f'{file_storage_url}/{task_name}/{output_mesh_name}.glb'
+
         sendRequestToUpdate3DModel(model_id,output_mesh_file_path_glb)
 
         return output_mesh_file_path_glb
@@ -199,7 +244,7 @@ def generate3DModel(reconstruction_configs):
         print(e)
         print('sendRequestForFailed3DModel runnning')
         print('model_id ',model_id)
-        # sendRequestForFailed3DModel(model_id)
+        sendRequestForFailed3DModel(model_id)
         return e
     
 def sendRequestToUpdate3DModel(model_id,model_url):

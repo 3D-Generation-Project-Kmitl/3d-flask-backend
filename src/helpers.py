@@ -66,25 +66,31 @@ def haveOnlyOneImageResolution(images_path):
 def clean_point_cloud(task_path,point_cloud_name):
     file_path=f'{task_path}/{point_cloud_name}.ply'
 
-    scaled_remove_outlier_file_path=f'{task_path}/{point_cloud_name}__scaled_remove_outlier.ply'
+    scaled_remove_outlier_file_path=f'{task_path}/{point_cloud_name}_scaled_remove_outlier.ply'
 
 
     ply_mesh_output_file_path=f'{task_path}/{point_cloud_name}_mesh_output.ply'
-
+    
     original_point_cloud_o3d=o3d.io.read_point_cloud(file_path)
-
-    original_point_cloud_o3d_remove_outlier,_=original_point_cloud_o3d.remove_radius_outlier(nb_points=16, radius=0.05)
-    scaled_original_point_cloud_o3d_remove_outlier=original_point_cloud_o3d_remove_outlier.scale(0.2,original_point_cloud_o3d_remove_outlier.get_center())
+    print(1)
+    # original_point_cloud_o3d_remove_outlier,_=original_point_cloud_o3d.remove_radius_outlier(nb_points=16, radius=0.05)
+    print(2)
+    scaled_original_point_cloud_o3d_remove_outlier=original_point_cloud_o3d.scale(0.2,original_point_cloud_o3d.get_center())
+    print(3)
     o3d.io.write_point_cloud(scaled_remove_outlier_file_path,scaled_original_point_cloud_o3d_remove_outlier)
-
-
+    print(4)
     ms = pymeshlab.MeshSet()
     ms.load_new_mesh(scaled_remove_outlier_file_path)
+    print(5)
     ms.apply_normal_point_cloud_smoothing(k=10)
+    print(6)
     ms.generate_surface_reconstruction_screened_poisson(preclean=True,depth=9)
+    print(7)
     ms.apply_coord_two_steps_smoothing(stepsmoothnum=2)
+    print(8)
     # ms.apply_coord_taubin_smoothing(stepsmoothnum=10)
     ms.save_current_mesh(ply_mesh_output_file_path)
+    print(9)
 
 
     return ply_mesh_output_file_path
@@ -281,11 +287,11 @@ def renderAndSave3DIn2DImages(mesh_path,image_path):
 
 def getMarchingCubesRes(quality):
     if(quality=='High'):
-        return HIGH_MARCHING_CUBES_RES
+        return HIGH_MARCHING_CUBES_RES, HIGH_REMOVE_INNER_PCD_ITERS,HIGH_POISSON_DEPTH
     elif(quality=='Medium'):
-        return MEDIUM_MARCHING_CUBES_RES
+        return MEDIUM_MARCHING_CUBES_RES, MEDIUM_REMOVE_INNER_PCD_ITERS,MEDIUM_POISSON_DEPTH
     else:
-        return LOW_MARCHING_CUBES_RES
+        return LOW_MARCHING_CUBES_RES, LOW_REMOVE_INNER_PCD_ITERS,LOW_POISSON_DEPTH
 
 def resize_padded(img, new_shape, fill_cval=None, order=1):
     import numpy as np
@@ -372,8 +378,8 @@ def constructTransformsJson():
 
 def do_system(arg):
     print(f"==== running: {arg}")
-    uid = os.getuid()
-    os.setuid(uid)
+    # uid = os.getuid()
+    # os.setuid(uid)
     err = os.system(arg)
     if err:
         print("FATAL: command failed")
