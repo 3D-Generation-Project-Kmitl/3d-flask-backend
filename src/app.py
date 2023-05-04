@@ -65,7 +65,6 @@ def addTask():
         #     reconstruction_configs['camera_parameter_list']=json.loads(request.form['camera_parameter_list'])
         # else:
         reconstruction_configs['camera_parameter_list']=None
-        
         print(f'reconstruction_configs: {reconstruction_configs}',file=sys.stderr)
         
         job = q.enqueue(
