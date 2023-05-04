@@ -1,5 +1,4 @@
 data/*
 !data/.gitkeep
-.devcontainer/.env
 .env
-src/__pycache__/
+__pycache__/
