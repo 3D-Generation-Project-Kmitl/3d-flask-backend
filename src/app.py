@@ -46,7 +46,7 @@ def emptyQueue():
     return f"{html}"
 
 
-@app.route('/gen3DModel',methods = ['POST','GET'])
+@app.route('/gen3DModel',methods = ['POST'])
 def addTask():
     try:
         f = request.files['raw_data']
