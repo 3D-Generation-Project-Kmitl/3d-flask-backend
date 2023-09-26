@@ -1,10 +1,10 @@
 from flask import Flask
 from flask_cors import CORS
-from reconstruction.api import reconstruction_api
+from api.routes import api_bp
 
 
 app=Flask(__name__)
-app.register_blueprint(reconstruction_api)
+app.register_blueprint(api_bp)
 
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'

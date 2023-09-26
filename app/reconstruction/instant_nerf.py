@@ -15,7 +15,7 @@ import pymeshlab
 r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
 q = Queue(QUEUE_NAME,connection=r)
 
-class ReconstructionPipeline:
+
 
 def generate3DModel(reconstruction_configs):
 
