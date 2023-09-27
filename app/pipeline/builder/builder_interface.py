@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+
+
 class PipelineBuilderInterface(ABC):
     @abstractmethod
     def add_image_processing_step(self):
@@ -19,6 +21,3 @@ class PipelineBuilderInterface(ABC):
     def build(self):
         pass
 
-class ReconstructionBuilder(PipelineBuilderInterface):
-    def __init__(self):
-        pass

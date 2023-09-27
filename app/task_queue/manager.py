@@ -1,4 +1,4 @@
-from pipeline.reconstruction import Pipeline
+from pipeline.builder import Director,ReconstructionPipilineBuilder
 
 class TaskQueueManager:
     def __init__(self):
@@ -10,12 +10,15 @@ class TaskQueueManager:
 
     def enqueue(self,reconstruction_configs):
         
-        reconstruction_pipeline=Pipeline(reconstruction_configs)
+        director=Director()
+        builder=ReconstructionPipilineBuilder()
+
+        director.create_reconstruction_pipeline_from_configs(builder,reconstruction_configs)
+        reconstruction_pipeline=builder.build()
 
         self.queues.enqueue(
-                self.reconstruction_pipeline.execute
-                , args=[reconstruction_configs]
-                ,job_timeout='1h'
+                reconstruction_pipeline.execute
+                ,job_timeout=1800
             )
 
     
