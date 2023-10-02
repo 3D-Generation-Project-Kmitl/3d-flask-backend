@@ -1,5 +1,5 @@
 
-class Director:
+class PipelineDirector:
     def create_reconstruction_pipeline_from_configs(self,builder,reconstruction_configs):
         #draft
         builder.add_image_processing_step(ImageCropResizer())
