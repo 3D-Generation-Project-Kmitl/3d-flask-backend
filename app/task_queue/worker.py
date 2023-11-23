@@ -1,6 +1,5 @@
 import redis
 from rq import Worker, Queue, Connection
-import app
 
 
 class TaskQueueWorker:

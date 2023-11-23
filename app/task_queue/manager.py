@@ -1,15 +1,18 @@
-import app
-from pipeline.builder import PipelineDirector,ReconstructionPipilineBuilder
 import redis
 from rq import Queue
-import TaskQueueWorker
+from .worker import TaskQueueWorker
+from flask import current_app
+import sys,os
+
+from app.pipeline.builder import PipelineDirector,ReconstructionPipilineBuilder
 
 class TaskQueueManager:
     def __init__(self):
-        connection = redis.Redis(host=app.config['REDIS_HOST'], port=app.config['REDIS_PORT'])
-        self.queues = Queue(app.config['QUEUE_NAME'],connection=connection)
+        import app
+        connection = redis.Redis(host=current_app.config['REDIS_HOST'], port=current_app.config['REDIS_PORT'])
+        self.queues = Queue(current_app.config['QUEUE_NAME'],connection=connection)
 
-        self.__start_worker(connection,app.config['QUEUE_NAME'])
+        self.__start_worker(connection,current_app.config['QUEUE_NAME'])
 
     def __start_worker(self,connection,queue_name):
         TaskQueueWorker(connection,queue_name)
@@ -25,13 +28,13 @@ class TaskQueueManager:
         self.queues.enqueue(
                 reconstruction_pipeline.execute,
                 args=[self]
-                ,job_timeout=app.config['QUEUE_JOB_TIMEOUT']
+                ,job_timeout=current_app.config['QUEUE_JOB_TIMEOUT']
             )
         
     def requeue(self,reconstruction_pipeline):
         self.queues.enqueue(
                 reconstruction_pipeline.execute,
                 args=[self]
-                ,job_timeout=app.config['QUEUE_JOB_TIMEOUT']
+                ,job_timeout=current_app.config['QUEUE_JOB_TIMEOUT']
             )
     

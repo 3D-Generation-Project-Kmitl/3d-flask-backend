@@ -9,7 +9,7 @@ class ReconstructionPipiline:
 
 
     def execute(self,task_queue_manager):
-        if GPUMemory.have_enough_memory():
+        if GPUMemory.have_enough_memory(20000):
             [ip.execute() for ip in self.image_processor]
             [pe.execute() for pe in self.pose_estimator]
             [br.execute() for br in self.background_remover]

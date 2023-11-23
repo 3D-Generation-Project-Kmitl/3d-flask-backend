@@ -14,8 +14,8 @@ class ReconstructionController:
         self.__reconstruction_config=json.load(request.form)
 
     def __store_image_files(self):
-        image_path=self.__cloud_storage_manager.store_file(self.__image_file)
-        self.__reconstruction_config['image_path']=image_path
+        image_file_name=self.__cloud_storage_manager.store_file(self.__image_file)
+        self.__reconstruction_config['image_file_name']=image_file_name
 
     def enqueue_task(self,request):
         self.__deserialize_request(request)

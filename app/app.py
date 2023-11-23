@@ -1,16 +1,18 @@
 from flask import Flask
 from flask_cors import CORS
 from api.routes import api_bp
+from config import *
+
 
 
 app=Flask(__name__)
 
-if app.config['FLASK_ENV']=='production':
-    app.config.from_object('config.ProductionConfig')
-elif app.config['FLASK_ENV']=='testing':
-    app.config.from_object('config.TestingConfig')
-else:    
-    app.config.from_object('config.DevelopmentConfig')
+config_class = {
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+}.get(app.config.get('FLASK_ENV', 'development'), DevelopmentConfig)
+
+app.config.from_object(config_class)
 
 app.register_blueprint(api_bp)
 
@@ -18,7 +20,7 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
-@app.route('/hello',methods = ['GET'])
+@app.route('/',methods = ['GET'])
 def get():
     return 'Hello From Modello Reconstruction Service'
 
