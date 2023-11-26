@@ -1,6 +1,6 @@
 import json
-from task_queue.manager import TaskQueueManager
-from cloud_storage.manager import CloudStorageManager
+from app.task_queue.manager import TaskQueueManager
+from app.cloud_storage.manager import CloudStorageManager
 class ReconstructionController:
     def __init__(self):
 

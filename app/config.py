@@ -12,6 +12,7 @@ class Config:
     AWS_ACCESS_KEY=environ.get('AWS_ACCESS_KEY')
     AWS_SECRET_KEY=environ.get('AWS_SECRET_KEY')
     S3_BUCKET_NAME=environ.get('S3_BUCKET_NAME')
+    AUTH_SECRET=environ.get('AUTH_SECRET')
 
 class ProductionConfig(Config):
     pass

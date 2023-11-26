@@ -1,5 +1,5 @@
-from gpu import GPUMemory
-class ReconstructionPipiline:
+from ..gpu.memory import GPUMemory
+class ReconstructionPipeline:
     def __init__(self,image_processor,pose_estimator,background_remover,reconstruction_method,mesh_processor):
         self.image_processor=image_processor
         self.pose_estimator=pose_estimator

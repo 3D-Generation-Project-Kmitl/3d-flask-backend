@@ -7,3 +7,5 @@ rq
 asyncio
 python-dotenv
 boto3
+pyjwt
+GPUtil

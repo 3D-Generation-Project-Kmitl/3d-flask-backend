@@ -1,7 +1,7 @@
-from pipeline.reconstruction import ReconstructionPipiline
-from builder_interface import PipelineBuilderInterface
+from ...pipeline.reconstruction import ReconstructionPipeline
+from .builder_interface import PipelineBuilderInterface
 
-class ReconstructionPipilineBuilder(PipelineBuilderInterface):
+class ReconstructionPipelineBuilder(PipelineBuilderInterface):
     def __init__(self):
         self.image_processor=[]
         self.pose_estimator=[]
@@ -25,7 +25,7 @@ class ReconstructionPipilineBuilder(PipelineBuilderInterface):
         self.mesh_processor.append(mesh_processor)
 
     def build(self):
-        return ReconstructionPipiline(image_processor=self.image_processor,
+        return ReconstructionPipeline(image_processor=self.image_processor,
                                       pose_estimator=self.pose_estimator,
                                       background_remover=self.background_remover,
                                       reconstruction_method=self.reconstruction_method,
